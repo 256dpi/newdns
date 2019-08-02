@@ -155,6 +155,12 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 		return
 	}
 
+	// check records
+	if len(records) == 0 {
+		s.writeNameError(w, r, zone)
+		return
+	}
+
 	// TODO: Add authoritative answers?
 	// TODO: Add extra answers?
 
@@ -179,12 +185,6 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 
 		// add answer
 		response.Answer = append(response.Answer, record.convert(name))
-	}
-
-	// check answer
-	if len(response.Answer) == 0 {
-		s.writeErr(w, r, dns.RcodeNameError)
-		return
 	}
 
 	// write message
@@ -267,6 +267,43 @@ func (s *Server) writeNSResponse(w dns.ResponseWriter, r *dns.Msg, zone *Zone) {
 			Ns: ns,
 		})
 	}
+
+	// write message
+	err := w.WriteMsg(response)
+	if err != nil {
+		s.reportErr(r, err.Error())
+		return
+	}
+}
+
+func (s *Server) writeNameError(w dns.ResponseWriter, r *dns.Msg, zone *Zone) {
+	// prepare response
+	response := new(dns.Msg)
+	response.SetRcode(r, dns.RcodeNameError)
+
+	// always compress responses
+	response.Compress = true
+
+	// add soa record
+	response.Ns = append(response.Ns, &dns.SOA{
+		Hdr: dns.RR_Header{
+			Name:   zone.Name,
+			Rrtype: dns.TypeSOA,
+			Class:  dns.ClassINET,
+			Ttl:    durationToTime(zone.SOATTL),
+
+		},
+		Ns:      zone.MasterNameServer,
+		Mbox:    emailToDomain(zone.AdminEmail),
+		Serial:  1,
+		Refresh: durationToTime(zone.Refresh),
+		Retry:   durationToTime(zone.Retry),
+		Expire:  durationToTime(zone.Expire),
+		Minttl:  durationToTime(zone.MinTTL),
+	})
+
+	// set flag
+	response.Authoritative = true
 
 	// write message
 	err := w.WriteMsg(response)
