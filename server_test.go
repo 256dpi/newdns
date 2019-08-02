@@ -37,7 +37,7 @@ func TestServerUDP(t *testing.T) {
 		Expire:     336 * time.Hour,
 		SOATTL:     15 * time.Minute,
 		NSTTL:      48 * time.Hour,
-		MinTTL:     24 * time.Hour,
+		MinTTL:     5 * time.Minute,
 		Handler: func(name string) ([]Record, error) {
 			return nil, nil
 		},
@@ -90,7 +90,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					Refresh: 7200,
 					Retry:   900,
 					Expire:  1209600,
-					Minttl:  86400,
+					Minttl:  300,
 				},
 			},
 			Ns: []dns.RR{
@@ -221,7 +221,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					Refresh: 7200,
 					Retry:   900,
 					Expire:  1209600,
-					Minttl:  86400,
+					Minttl:  300,
 				},
 			},
 		}, ret)
@@ -254,7 +254,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					Refresh: 7200,
 					Retry:   900,
 					Expire:  1209600,
-					Minttl:  86400,
+					Minttl:  300,
 				},
 			},
 		}, ret)
