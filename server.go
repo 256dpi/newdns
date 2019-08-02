@@ -82,8 +82,6 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 		return
 	}
 
-	// TODO: Check recursion desired?
-
 	// ignore to less or too many questions
 	if len(r.Question) != 1 {
 		s.writeErr(w, r, dns.RcodeNotImplemented)
@@ -139,7 +137,7 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 	}
 
 	// get records
-	records, err := zone.Handler(name)
+	records, err := zone.Handler(TrimZone(zone.Name, name))
 	if err != nil {
 		s.writeErr(w, r, dns.RcodeServerFailure)
 		s.reportErr(r, err.Error())
@@ -151,9 +149,6 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 		s.writeNameError(w, r, zone)
 		return
 	}
-
-	// TODO: Add authoritative answers?
-	// TODO: Add extra answers?
 
 	// prepare response
 	response := new(dns.Msg)
@@ -179,6 +174,19 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 
 		// add answer
 		response.Answer = append(response.Answer, record.convert(name, zone))
+	}
+
+	// add ns records
+	for _, ns := range zone.AllNameServers {
+		response.Ns = append(response.Ns, &dns.NS{
+			Hdr: dns.RR_Header{
+				Name:   zone.Name,
+				Rrtype: dns.TypeNS,
+				Class:  dns.ClassINET,
+				Ttl:    durationToTime(zone.NSTTL),
+			},
+			Ns: ns,
+		})
 	}
 
 	// write message
