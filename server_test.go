@@ -27,10 +27,10 @@ func TestServerUDP(t *testing.T) {
 		Name:             "newdns.256dpi.com.",
 		MasterNameServer: awsPrimaryNS,
 		AllNameServers: []string{
-			awsNS[0],
 			awsNS[1],
-			awsNS[2],
+			awsNS[0],
 			awsNS[3],
+			awsNS[2],
 		},
 		AdminEmail: "awsdns-hostmaster@amazon.com",
 		Refresh:    2 * time.Hour,

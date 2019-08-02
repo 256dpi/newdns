@@ -3,6 +3,7 @@ package newdns
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 	"time"
 
@@ -149,6 +150,11 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 		s.writeNameError(w, r, zone)
 		return
 	}
+
+	// sort records
+	sort.Slice(records, func(i, j int) bool {
+		return records[i].sortKey() < records[j].sortKey()
+	})
 
 	// prepare response
 	response := new(dns.Msg)

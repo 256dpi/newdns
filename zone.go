@@ -2,6 +2,7 @@ package newdns
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/miekg/dns"
@@ -79,6 +80,9 @@ func (z *Zone) Validate() error {
 			return fmt.Errorf("additional name server not fully qualified")
 		}
 	}
+
+	// sort name servers
+	sort.Strings(z.AllNameServers)
 
 	// set default admin email
 	if z.AdminEmail == "" {

@@ -82,11 +82,16 @@ func (r *Record) Validate() error {
 		return fmt.Errorf("invalid type")
 	}
 
-	// TODO: Check address.
+	// TODO: Validate address.
 
 	// set default ttl
 	if r.TTL == 0 {
 		r.TTL = 5 * time.Minute
+	}
+
+	// check txt data
+	if r.Type == TypeTXT && len(r.TXTData) == 0 {
+		return fmt.Errorf("missing txt data")
 	}
 
 	return nil
@@ -132,4 +137,15 @@ func (r *Record) convert(name string, zone *Zone) dns.RR {
 	default:
 		return nil
 	}
+}
+
+func (r *Record) sortKey() string {
+	switch r.Type {
+	case TypeA, TypeAAAA, TypeCNAME, TypeMX:
+		return r.Address
+	case TypeTXT:
+		return r.TXTData[0]
+	}
+
+	return ""
 }
