@@ -36,6 +36,7 @@ func TestServerUDP(t *testing.T) {
 		Retry:      15 * time.Minute,
 		Expire:     336 * time.Hour,
 		SOATTL:     15 * time.Minute,
+		NSTTL:      48 * time.Hour,
 		MinTTL:     24 * time.Hour,
 		Handler: func(typ Type, name string) ([]Record, error) {
 			return nil, nil
