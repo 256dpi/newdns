@@ -43,7 +43,8 @@ func TestServerUDP(t *testing.T) {
 			// handle apex records
 			if name == "" {
 				return []Record{
-					{ Type: TypeA, Address: "1.2.3.4" },
+					{Type: TypeA, Address: "1.2.3.4"},
+					{Type: TypeAAAA, Address: "1:2:3:4::"},
 				}, nil
 			}
 
@@ -93,6 +94,74 @@ func abstractTest(t *testing.T, proto, addr string) {
 						Rdlength: 4,
 					},
 					A: net.ParseIP("1.2.3.4"),
+				},
+			},
+			Ns: []dns.RR{
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 23,
+					},
+					Ns: awsNS[0],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 19,
+					},
+					Ns: awsNS[1],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 25,
+					},
+					Ns: awsNS[2],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 22,
+					},
+					Ns: awsNS[3],
+				},
+			},
+		}, ret)
+	})
+
+	t.Run("ApexAAAA", func(t *testing.T) {
+		ret, err := query(proto, addr, "newdns.256dpi.com.", "AAAA", false)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "newdns.256dpi.com.", Qtype: dns.TypeAAAA, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.AAAA{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeAAAA,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 16,
+					},
+					AAAA: net.ParseIP("1:2:3:4::"),
 				},
 			},
 			Ns: []dns.RR{

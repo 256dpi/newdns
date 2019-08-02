@@ -25,7 +25,7 @@ func run(s *Server, addr string, fn func()) {
 	fn()
 }
 
-func query(net, addr, name, typ string, edns bool) (*dns.Msg, error) {
+func query(proto, addr, name, typ string, edns bool) (*dns.Msg, error) {
 	msg := new(dns.Msg)
 	msg.Id = dns.Id()
 	msg.Question = make([]dns.Question, 1)
@@ -39,7 +39,7 @@ func query(net, addr, name, typ string, edns bool) (*dns.Msg, error) {
 		msg.SetEdns0(4096, false)
 	}
 
-	client := dns.Client{Net: net}
+	client := dns.Client{Net: proto}
 	ret, _, err := client.Exchange(msg, addr)
 	if err != nil {
 		return nil, err

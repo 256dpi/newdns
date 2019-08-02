@@ -109,9 +109,9 @@ func (r *Record) convert(name string, zone *Zone) dns.RR {
 			A:   net.ParseIP(r.Address),
 		}
 	case TypeAAAA:
-		return &dns.A{
-			Hdr: header,
-			A:   net.ParseIP(r.Address),
+		return &dns.AAAA{
+			Hdr:  header,
+			AAAA: net.ParseIP(r.Address),
 		}
 	case TypeCNAME:
 		return &dns.CNAME{

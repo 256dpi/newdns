@@ -160,7 +160,7 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 	// set flag
 	response.Authoritative = true
 
-	// add records
+	// add matching records
 	for _, record := range records {
 		// validate record
 		err = record.Validate()
@@ -170,10 +170,10 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 			return
 		}
 
-		// TODO: Check which answers to add.
-
-		// add answer
-		response.Answer = append(response.Answer, record.convert(name, zone))
+		// add matching answer
+		if uint16(record.Type) == question.Qtype {
+			response.Answer = append(response.Answer, record.convert(name, zone))
+		}
 	}
 
 	// add ns records
