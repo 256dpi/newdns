@@ -45,8 +45,8 @@ func TestServerUDP(t *testing.T) {
 				return []Record{
 					{Type: TypeA, Address: "1.2.3.4"},
 					{Type: TypeAAAA, Address: "1:2:3:4::"},
-					{Type: TypeTXT, TXTData: []string{"foo"}},
-					{Type: TypeTXT, TXTData: []string{"bar"}},
+					{Type: TypeTXT, TXTData: []string{"foo", "bar"}},
+					{Type: TypeTXT, TXTData: []string{"baz"}},
 				}, nil
 			}
 
@@ -361,7 +361,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 						Ttl:      300,
 						Rdlength: 4,
 					},
-					Txt: []string{"bar"},
+					Txt: []string{"baz"},
 				},
 				&dns.TXT{
 					Hdr: dns.RR_Header{
@@ -369,9 +369,9 @@ func abstractTest(t *testing.T, proto, addr string) {
 						Rrtype:   dns.TypeTXT,
 						Class:    dns.ClassINET,
 						Ttl:      300,
-						Rdlength: 4,
+						Rdlength: 8,
 					},
-					Txt: []string{"foo"},
+					Txt: []string{"foo", "bar"},
 				},
 			},
 			Ns: []dns.RR{
