@@ -82,7 +82,6 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 		return
 	}
 
-	// TODO: Check incoming rcode?
 	// TODO: Check recursion desired?
 
 	// ignore to less or too many questions
@@ -101,14 +100,6 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 		s.reportErr(r, "unsupported question class")
 		return
 	}
-
-	// get and check type
-	typ := Type(question.Qtype)
-	// if !typ.valid() {
-	// 	s.writeErr(w, r, dns.RcodeNotImplemented)
-	// 	s.reportErr(r, "unsupported question type")
-	// 	return
-	// }
 
 	// get name
 	name := strings.ToLower(dns.Name(question.Name).String())
@@ -148,7 +139,7 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 	}
 
 	// get records
-	records, err := zone.Handler(typ, name)
+	records, err := zone.Handler(name)
 	if err != nil {
 		s.writeErr(w, r, dns.RcodeServerFailure)
 		s.reportErr(r, err.Error())
@@ -176,12 +167,15 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 
 	// add records
 	for _, record := range records {
-		// check type
-		if record.Type != typ {
+		// validate record
+		err = record.Validate()
+		if err != nil {
 			s.writeErr(w, r, dns.RcodeServerFailure)
-			s.reportErr(r, "returned record type did not match request type")
+			s.reportErr(r, err.Error())
 			return
 		}
+
+		// TODO: Check which answers to add.
 
 		// add answer
 		response.Answer = append(response.Answer, record.convert(name, zone))

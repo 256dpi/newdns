@@ -38,7 +38,7 @@ func TestServerUDP(t *testing.T) {
 		SOATTL:     15 * time.Minute,
 		NSTTL:      48 * time.Hour,
 		MinTTL:     24 * time.Hour,
-		Handler: func(typ Type, name string) ([]Record, error) {
+		Handler: func(name string) ([]Record, error) {
 			return nil, nil
 		},
 	}
