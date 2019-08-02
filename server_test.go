@@ -45,6 +45,8 @@ func TestServerUDP(t *testing.T) {
 				return []Record{
 					{Type: TypeA, Address: "1.2.3.4"},
 					{Type: TypeAAAA, Address: "1:2:3:4::"},
+					{Type: TypeTXT, TXTData: []string{"foo"}},
+					{Type: TypeTXT, TXTData: []string{"bar"}},
 				}, nil
 			}
 
@@ -295,6 +297,84 @@ func abstractTest(t *testing.T, proto, addr string) {
 				{Name: "newdns.256dpi.com.", Qtype: dns.TypeNS, Qclass: dns.ClassINET},
 			},
 			Answer: []dns.RR{
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 23,
+					},
+					Ns: awsNS[0],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 19,
+					},
+					Ns: awsNS[1],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 25,
+					},
+					Ns: awsNS[2],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 22,
+					},
+					Ns: awsNS[3],
+				},
+			},
+		}, ret)
+	})
+
+	t.Run("ApexTXT", func(t *testing.T) {
+		ret, err := query(proto, addr, "newdns.256dpi.com.", "TXT", false)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "newdns.256dpi.com.", Qtype: dns.TypeTXT, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.TXT{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeTXT,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 4,
+					},
+					Txt: []string{"bar"},
+				},
+				&dns.TXT{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeTXT,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 4,
+					},
+					Txt: []string{"foo"},
+				},
+			},
+			Ns: []dns.RR{
 				&dns.NS{
 					Hdr: dns.RR_Header{
 						Name:     "newdns.256dpi.com.",
