@@ -63,7 +63,7 @@ func TestServerUDP(t *testing.T) {
 }
 
 func abstractTest(t *testing.T, proto, addr string) {
-	t.Run("ExistingApexSOA", func(t *testing.T) {
+	t.Run("ApexSOA", func(t *testing.T) {
 		ret, err := query(proto, addr, "newdns.256dpi.com.", "SOA", false)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
@@ -137,7 +137,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 		}, ret)
 	})
 
-	t.Run("ExistingApexNS", func(t *testing.T) {
+	t.Run("ApexNS", func(t *testing.T) {
 		ret, err := query(proto, addr, "newdns.256dpi.com.", "NS", false)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
