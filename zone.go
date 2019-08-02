@@ -50,7 +50,9 @@ type Zone struct {
 	// Default: 48h.
 	NSTTL time.Duration
 
-	// The minimum TTL for all records.
+	// The minimum TTL for all records. Either this value, or the SOATTL if lower,
+	// is used to determine the "negative caching TTL" which is the duration
+	// caches are allowed to cache missing records (NXDOMAIN).
 	//
 	// Default: 5min.
 	MinTTL time.Duration
