@@ -184,7 +184,7 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 		}
 
 		// add answer
-		response.Answer = append(response.Answer, record.convert(name))
+		response.Answer = append(response.Answer, record.convert(name, zone))
 	}
 
 	// write message
@@ -291,7 +291,6 @@ func (s *Server) writeNameError(w dns.ResponseWriter, r *dns.Msg, zone *Zone) {
 			Rrtype: dns.TypeSOA,
 			Class:  dns.ClassINET,
 			Ttl:    durationToTime(zone.SOATTL),
-
 		},
 		Ns:      zone.MasterNameServer,
 		Mbox:    emailToDomain(zone.AdminEmail),

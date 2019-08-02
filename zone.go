@@ -125,3 +125,12 @@ func (z *Zone) Validate() error {
 
 	return nil
 }
+
+func (z *Zone) minTTL(ttl time.Duration) time.Duration {
+	// return zone min ttl if to less
+	if ttl < z.MinTTL {
+		return z.MinTTL
+	}
+
+	return ttl
+}

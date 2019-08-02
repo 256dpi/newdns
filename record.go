@@ -92,13 +92,13 @@ func (r *Record) Validate() error {
 	return nil
 }
 
-func (r *Record) convert(name string) dns.RR {
+func (r *Record) convert(name string, zone *Zone) dns.RR {
 	// prepare header
 	header := dns.RR_Header{
 		Name:   name,
 		Rrtype: uint16(r.Type),
 		Class:  dns.ClassINET,
-		Ttl:    durationToTime(r.TTL),
+		Ttl:    durationToTime(zone.minTTL(r.TTL)),
 	}
 
 	// construct record
