@@ -1,7 +1,9 @@
 package newdns
 
 import (
+	"math"
 	"strings"
+	"time"
 
 	"github.com/miekg/dns"
 )
@@ -44,4 +46,8 @@ func emailToDomain(email string) string {
 	name := parts[0] + "." + parts[1]
 
 	return dns.Fqdn(name)
+}
+
+func durationToTime(d time.Duration) uint32 {
+	return uint32(math.Ceil(d.Seconds()))
 }

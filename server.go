@@ -2,9 +2,7 @@ package newdns
 
 import (
 	"fmt"
-	"math"
 	"strings"
-	"time"
 
 	"github.com/miekg/dns"
 )
@@ -328,8 +326,4 @@ func (s *Server) reportError(r *dns.Msg, msg string) {
 	if s.config.Reporter != nil {
 		s.config.Reporter(fmt.Errorf("%s: %+v", msg, r))
 	}
-}
-
-func durationToTime(d time.Duration) uint32 {
-	return uint32(math.Ceil(d.Seconds()))
 }
