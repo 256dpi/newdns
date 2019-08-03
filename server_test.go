@@ -1022,7 +1022,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 		assertMissing(t, proto, addr, "text.newdns.256dpi.com.", "A", dns.RcodeSuccess)
 	})
 
-	t.Run("MissingRecords", func(t *testing.T) {
+	t.Run("NoRecord", func(t *testing.T) {
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "A", dns.RcodeNameError)
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "AAAA", dns.RcodeNameError)
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "CNAME", dns.RcodeNameError)
