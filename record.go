@@ -24,14 +24,14 @@ func (r *Record) Validate(set *Set) error {
 	// validate A and AAAA addresses
 	if set.Type == TypeA || set.Type == TypeAAAA {
 		if net.ParseIP(r.Address) == nil {
-			return fmt.Errorf("invalid address")
+			return fmt.Errorf("invalid ip address")
 		}
 	}
 
 	// validate CNAME and MX addresses
 	if set.Type == TypeCNAME || set.Type == TypeMX {
-		if !dns.IsFqdn(r.Address) {
-			return fmt.Errorf("invalid address")
+		if _, ok := dns.IsDomainName(r.Address); !ok {
+			return fmt.Errorf("invalid domain address")
 		}
 	}
 
