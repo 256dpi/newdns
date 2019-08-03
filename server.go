@@ -3,7 +3,6 @@ package newdns
 import (
 	"fmt"
 	"math"
-	"sort"
 	"strings"
 	"time"
 
@@ -137,24 +136,29 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 		return
 	}
 
-	// get records
-	records, err := zone.Handler(TrimZone(zone.Name, name))
+	// get sets
+	sets, err := zone.Handler(TrimZone(zone.Name, name))
 	if err != nil {
 		s.writeErr(w, r, dns.RcodeServerFailure)
 		s.reportErr(r, err.Error())
 		return
 	}
 
-	// check records
-	if len(records) == 0 {
+	// check sets
+	if len(sets) == 0 {
 		s.writeNameError(w, r, zone)
 		return
 	}
 
-	// sort records
-	sort.Slice(records, func(i, j int) bool {
-		return records[i].sortKey() < records[j].sortKey()
-	})
+	// validate sets
+	for _, set := range sets {
+		err = set.Validate()
+		if err != nil {
+			s.writeErr(w, r, dns.RcodeServerFailure)
+			s.reportErr(r, err.Error())
+			return
+		}
+	}
 
 	// prepare response
 	response := new(dns.Msg)
@@ -166,28 +170,20 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 	// set flag
 	response.Authoritative = true
 
-	// add matching records
-	for _, record := range records {
-		// validate record
-		err = record.Validate()
-		if err != nil {
-			s.writeErr(w, r, dns.RcodeServerFailure)
-			s.reportErr(r, err.Error())
-			return
-		}
-
+	// add matching set
+	for _, set := range sets {
 		// add matching answer
-		if uint16(record.Type) == question.Qtype {
-			response.Answer = append(response.Answer, record.convert(name, zone))
+		if uint16(set.Type) == question.Qtype {
+			response.Answer = set.convert(zone, name)
 		}
 	}
 
-	// add alternative records
+	// add A, AAAA or CNAME set as alternative
 	if len(response.Answer) == 0 {
-		for _, record := range records {
+		for _, set := range sets {
 			// add A, AAAA or CNAME record
-			if record.Type == TypeA || record.Type == TypeAAAA || record.Type == TypeCNAME {
-				response.Answer = append(response.Answer, record.convert(name, zone))
+			if set.Type == TypeA || set.Type == TypeAAAA || set.Type == TypeCNAME {
+				response.Answer = set.convert(zone, name)
 				break
 			}
 		}

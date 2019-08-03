@@ -59,7 +59,7 @@ type Zone struct {
 	MinTTL time.Duration
 
 	// The handler that responds to requests for this zone.
-	Handler func(name string) ([]Record, error)
+	Handler func(name string) ([]Set, error)
 }
 
 // Validate will validate the zone and ensure the documented defaults.

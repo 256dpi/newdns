@@ -3,6 +3,7 @@ package newdns
 import (
 	"fmt"
 	"net"
+	"sort"
 	"time"
 
 	"github.com/miekg/dns"
@@ -57,57 +58,51 @@ func (t Type) valid() bool {
 
 // Record holds a single DNS record.
 type Record struct {
-	// The type of the record.
-	Type Type
-
 	// The target address for A, AAAA, CNAME, MX and NS records.
 	Address string
 
-	// The TTl of the record.
-	//
-	// Default: 5m.
-	TTL time.Duration
-
 	// The priority for MX records.
-	MXPriority int
+	Priority int
 
-	// The data of TXT records.
-	TXTData []string
+	// The data for TXT records.
+	Data []string
 }
 
-// Validate will validate the record and ensure defaults.
-func (r *Record) Validate() error {
-	// check type
-	if !r.Type.valid() {
-		return fmt.Errorf("invalid type")
+// Validate will validate the record.
+func (r *Record) Validate(set *Set) error {
+	// validate A and AAAA addresses
+	if set.Type == TypeA || set.Type == TypeAAAA {
+		if net.ParseIP(r.Address) == nil {
+			return fmt.Errorf("invalid address")
+		}
 	}
 
-	// TODO: Validate address.
-
-	// set default ttl
-	if r.TTL == 0 {
-		r.TTL = 5 * time.Minute
+	// validate CNAME and MX addresses
+	if set.Type == TypeCNAME || set.Type == TypeMX {
+		if !dns.IsFqdn(r.Address) {
+			return fmt.Errorf("invalid address")
+		}
 	}
 
 	// check txt data
-	if r.Type == TypeTXT && len(r.TXTData) == 0 {
+	if set.Type == TypeTXT && len(r.Data) == 0 {
 		return fmt.Errorf("missing txt data")
 	}
 
 	return nil
 }
 
-func (r *Record) convert(name string, zone *Zone) dns.RR {
+func (r *Record) convert(zone *Zone, set *Set, name string) dns.RR {
 	// prepare header
 	header := dns.RR_Header{
 		Name:   name,
-		Rrtype: uint16(r.Type),
+		Rrtype: uint16(set.Type),
 		Class:  dns.ClassINET,
-		Ttl:    durationToTime(zone.minTTL(r.TTL)),
+		Ttl:    durationToTime(zone.minTTL(set.TTL)),
 	}
 
 	// construct record
-	switch r.Type {
+	switch set.Type {
 	case TypeA:
 		return &dns.A{
 			Hdr: header,
@@ -126,13 +121,13 @@ func (r *Record) convert(name string, zone *Zone) dns.RR {
 	case TypeMX:
 		return &dns.MX{
 			Hdr:        header,
-			Preference: uint16(r.MXPriority),
+			Preference: uint16(r.Priority),
 			Mx:         dns.Fqdn(r.Address),
 		}
 	case TypeTXT:
 		return &dns.TXT{
 			Hdr: header,
-			Txt: r.TXTData,
+			Txt: r.Data,
 		}
 	default:
 		return nil
@@ -140,12 +135,74 @@ func (r *Record) convert(name string, zone *Zone) dns.RR {
 }
 
 func (r *Record) sortKey() string {
-	switch r.Type {
-	case TypeA, TypeAAAA, TypeCNAME, TypeMX:
+	// return address if set
+	if r.Address != "" {
 		return r.Address
-	case TypeTXT:
-		return r.TXTData[0]
+	}
+
+	// return firs txt data
+	if len(r.Data) > 0 {
+		return r.Data[0]
 	}
 
 	return ""
+}
+
+// Set is a set of records.
+type Set struct {
+	// The type of the record.
+	Type Type
+
+	// The records in the set.
+	Records []Record
+
+	// The TTl of the record.
+	//
+	// Default: 5m.
+	TTL time.Duration
+}
+
+// Validate will validate the set and ensure defaults.
+func (s *Set) Validate() error {
+	// check type
+	if !s.Type.valid() {
+		return fmt.Errorf("invalid type")
+	}
+
+	// check records
+	if len(s.Records) == 0 {
+		return fmt.Errorf("missing records")
+	}
+
+	// validate records
+	for _, record := range s.Records {
+		err := record.Validate(s)
+		if err != nil {
+			return err
+		}
+	}
+
+	// sort records
+	sort.Slice(s.Records, func(i, j int) bool {
+		return s.Records[i].sortKey() < s.Records[j].sortKey()
+	})
+
+	// set default ttl
+	if s.TTL == 0 {
+		s.TTL = 5 * time.Minute
+	}
+
+	return nil
+}
+
+func (s *Set) convert(zone *Zone, name string) []dns.RR {
+	// prepare list
+	var list []dns.RR
+
+	// add records
+	for _, record := range s.Records {
+		list = append(list, record.convert(zone, s, name))
+	}
+
+	return list
 }

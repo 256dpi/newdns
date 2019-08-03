@@ -45,35 +45,65 @@ func TestServer(t *testing.T) {
 		SOATTL:     15 * time.Minute,
 		NSTTL:      48 * time.Hour,
 		MinTTL:     5 * time.Minute,
-		Handler: func(name string) ([]Record, error) {
+		Handler: func(name string) ([]Set, error) {
 			// handle apex records
 			if name == "" {
-				return []Record{
-					{Type: TypeA, Address: "1.2.3.4"},
-					{Type: TypeAAAA, Address: "1:2:3:4::"},
-					{Type: TypeTXT, TXTData: []string{"foo", "bar"}},
-					{Type: TypeTXT, TXTData: []string{"baz"}},
+				return []Set{
+					{
+						Type: TypeA,
+						Records: []Record{
+							{Address: "1.2.3.4"},
+						},
+					},
+					{
+						Type: TypeAAAA,
+						Records: []Record{
+							{Address: "1:2:3:4::"},
+						},
+					},
+					{
+						Type: TypeTXT,
+						Records: []Record{
+							{Data: []string{"foo", "bar"}},
+							{Data: []string{"baz"}},
+						},
+					},
 				}, nil
 			}
 
 			// handle example
 			if name == "example" {
-				return []Record{
-					{Type: TypeCNAME, Address: "example.com"},
+				return []Set{
+					{
+						Type: TypeCNAME,
+						Records: []Record{
+							{Address: "example.com."},
+						},
+					},
 				}, nil
 			}
 
 			// handle ip4
 			if name == "ip4" {
-				return []Record{
-					{Type: TypeA, Address: "1.2.3.4"},
+				return []Set{
+					{
+						Type: TypeA,
+						Records: []Record{
+							{Address: "1.2.3.4"},
+						},
+					},
 				}, nil
 			}
 
 			// handle ip6
 			if name == "ip6" {
-				return []Record{
-					{Type: TypeAAAA, Address: "1:2:3:4::"},
+				return []Set{
+					{
+						Type: TypeAAAA,
+						Records: []Record{
+							{Address: "1:2:3:4::"},
+						},
+					},
 				}, nil
 			}
 
