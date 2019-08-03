@@ -136,6 +136,7 @@ func TestServer(t *testing.T) {
 	}
 
 	server := NewServer(Config{
+		BufferSize: 4096,
 		Handler: func(name string) (*Zone, error) {
 			if InZone("newdns.256dpi.com.", name) {
 				return zone, nil
@@ -1028,6 +1029,129 @@ func abstractTest(t *testing.T, proto, addr string) {
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "CNAME", dns.RcodeNameError)
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "MX", dns.RcodeNameError)
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "TXT", dns.RcodeNameError)
+	})
+
+	t.Run("EDNSSuccess", func(t *testing.T) {
+		ret, err := query(proto, addr, "newdns.256dpi.com.", "A", true)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "newdns.256dpi.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.A{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeA,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 4,
+					},
+					A: net.ParseIP("1.2.3.4"),
+				},
+			},
+			Ns: []dns.RR{
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 23,
+					},
+					Ns: awsNS[0],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 19,
+					},
+					Ns: awsNS[1],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 25,
+					},
+					Ns: awsNS[2],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 22,
+					},
+					Ns: awsNS[3],
+				},
+			},
+			Extra: []dns.RR{
+				&dns.OPT{
+					Hdr: dns.RR_Header{
+						Name:     ".",
+						Rrtype:   dns.TypeOPT,
+						Class:    4096,
+						Ttl:      0,
+						Rdlength: 0,
+					},
+				},
+			},
+		}, ret)
+	})
+
+	t.Run("EDNSError", func(t *testing.T) {
+		ret, err := query(proto, addr, "missing.newdns.256dpi.com.", "A", true)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+				Rcode:         dns.RcodeNameError,
+			},
+			Question: []dns.Question{
+				{Name: "missing.newdns.256dpi.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+			},
+			Ns: []dns.RR{
+				&dns.SOA{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeSOA,
+						Class:    dns.ClassINET,
+						Ttl:      900,
+						Rdlength: 66,
+					},
+					Ns:      awsPrimaryNS,
+					Mbox:    "awsdns-hostmaster.amazon.com.",
+					Serial:  1,
+					Refresh: 7200,
+					Retry:   900,
+					Expire:  1209600,
+					Minttl:  300,
+				},
+			},
+			Extra: []dns.RR{
+				&dns.OPT{
+					Hdr: dns.RR_Header{
+						Name:     ".",
+						Rrtype:   dns.TypeOPT,
+						Class:    4096,
+						Ttl:      0,
+						Rdlength: 0,
+					},
+				},
+			},
+		}, ret)
 	})
 }
 

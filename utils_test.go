@@ -36,7 +36,7 @@ func query(proto, addr, name, typ string, edns bool) (*dns.Msg, error) {
 	}
 
 	if edns {
-		msg.SetEdns0(4096, false)
+		msg.SetEdns0(1337, false)
 	}
 
 	client := dns.Client{Net: proto}

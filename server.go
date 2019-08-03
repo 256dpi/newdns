@@ -11,6 +11,11 @@ import (
 
 // Config provides configuration for a DNS server.
 type Config struct {
+	// The buffer size used if EDNS is enabled by a client.
+	//
+	// Default: 1220.
+	BufferSize int
+
 	// Handler is the callback that returns a zone for the specified name.
 	Handler func(name string) (*Zone, error)
 
@@ -26,6 +31,11 @@ type Server struct {
 
 // NewServer creates and returns a new DNS server.
 func NewServer(config Config) *Server {
+	// set default buffer size
+	if config.BufferSize <= 0 {
+		config.BufferSize = 1220
+	}
+
 	return &Server{
 		config: config,
 		close:  make(chan struct{}),
@@ -74,28 +84,43 @@ func (s *Server) Close() {
 	close(s.close)
 }
 
-func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
+func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
+	// prepare response
+	rs := new(dns.Msg)
+	rs.SetReply(rq)
+
+	// always compress responses
+	rs.Compress = true
+
+	// set flag
+	rs.Authoritative = true
+
+	// set edns
+	if rq.IsEdns0() != nil {
+		rs.SetEdns0(uint16(s.config.BufferSize), false)
+	}
+
 	// check opcode
-	if r.Opcode != dns.OpcodeQuery {
-		s.writeError(w, r, dns.RcodeNotImplemented)
-		s.reportError(r, "opcode is not query")
+	if rq.Opcode != dns.OpcodeQuery {
+		s.writeError(w, rq, dns.RcodeNotImplemented)
+		s.reportError(rq, "opcode is not query")
 		return
 	}
 
 	// ignore to less or too many questions
-	if len(r.Question) != 1 {
-		s.writeError(w, r, dns.RcodeNotImplemented)
-		s.reportError(r, "too many questions")
+	if len(rq.Question) != 1 {
+		s.writeError(w, rq, dns.RcodeNotImplemented)
+		s.reportError(rq, "too many questions")
 		return
 	}
 
 	// get question
-	question := r.Question[0]
+	question := rq.Question[0]
 
 	// check class
 	if question.Qclass != dns.ClassINET {
-		s.writeError(w, r, dns.RcodeNotImplemented)
-		s.reportError(r, "unsupported question class")
+		s.writeError(w, rq, dns.RcodeNotImplemented)
+		s.reportError(rq, "unsupported question class")
 		return
 	}
 
@@ -105,99 +130,92 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 	// get zone
 	zone, err := s.config.Handler(name)
 	if err != nil {
-		s.writeError(w, r, dns.RcodeServerFailure)
-		s.reportError(r, err.Error())
+		s.writeError(w, rq, dns.RcodeServerFailure)
+		s.reportError(rq, err.Error())
 		return
 	}
 
 	// check zone
 	if zone == nil {
-		s.writeError(w, r, dns.RcodeNameError)
+		s.writeError(w, rq, dns.RcodeNameError)
 		return
 	}
 
 	// validate zone
 	err = zone.Validate()
 	if err != nil {
-		s.writeError(w, r, dns.RcodeServerFailure)
-		s.reportError(r, err.Error())
+		s.writeError(w, rq, dns.RcodeServerFailure)
+		s.reportError(rq, err.Error())
 		return
 	}
 
 	// answer SOA directly
 	if question.Qtype == dns.TypeSOA && name == zone.Name {
-		s.writeSOAResponse(w, r, zone)
+		s.writeSOAResponse(w, rq, rs, zone)
 		return
 	}
 
 	// answer NS directly
 	if question.Qtype == dns.TypeNS && name == zone.Name {
-		s.writeNSResponse(w, r, zone)
+		s.writeNSResponse(w, rq, rs, zone)
 		return
 	}
 
 	// get sets
 	sets, err := zone.Handler(TrimZone(zone.Name, name))
 	if err != nil {
-		s.writeError(w, r, dns.RcodeServerFailure)
-		s.reportError(r, err.Error())
+		s.writeError(w, rq, dns.RcodeServerFailure)
+		s.reportError(rq, err.Error())
 		return
 	}
 
 	// check sets
 	if len(sets) == 0 {
-		s.writeErrorWithSOA(w, r, zone, dns.RcodeNameError)
-		s.reportError(r, "no sets")
+		s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeNameError)
+		s.reportError(rq, "no sets")
 		return
 	}
+
+	// TODO: A CNAME set must be alone for a label.
+	// TODO: Do not allow CNAME sets for apex domain.
 
 	// validate sets
 	for _, set := range sets {
 		err = set.Validate()
 		if err != nil {
-			s.writeError(w, r, dns.RcodeServerFailure)
-			s.reportError(r, err.Error())
+			s.writeError(w, rq, dns.RcodeServerFailure)
+			s.reportError(rq, err.Error())
 			return
 		}
 	}
 
-	// prepare response
-	response := new(dns.Msg)
-	response.SetReply(r)
-
-	// always compress responses
-	response.Compress = true
-
-	// set flag
-	response.Authoritative = true
-
 	// add matching set
 	for _, set := range sets {
 		if uint16(set.Type) == question.Qtype {
-			response.Answer = set.convert(zone, name)
+			rs.Answer = set.convert(zone, name)
 		}
 	}
 
 	// return CNAME set for A and AAAA queries
-	if len(response.Answer) == 0 && (question.Qtype == dns.TypeA || question.Qtype == dns.TypeAAAA) {
+	if len(rs.Answer) == 0 && (question.Qtype == dns.TypeA || question.Qtype == dns.TypeAAAA) {
 		for _, set := range sets {
 			if set.Type == TypeCNAME {
-				response.Answer = set.convert(zone, name)
+				rs.Answer = set.convert(zone, name)
 				break
 			}
 		}
 	}
 
 	// write SOA with success code to indicate available other sets
-	if len(response.Answer) == 0 {
-		s.writeErrorWithSOA(w, r, zone, dns.RcodeSuccess)
-		s.reportError(r, "no answer")
+	if len(rs.Answer) == 0 {
+		s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeSuccess)
+		s.reportError(rq, "no answer")
 		return
 	}
 
 	// add ns records
 	for _, ns := range zone.AllNameServers {
-		response.Ns = append(response.Ns, &dns.NS{
+		rs.Ns = append(rs.Ns, &dns.NS{
 			Hdr: dns.RR_Header{
 				Name:   zone.Name,
 				Rrtype: dns.TypeNS,
@@ -209,23 +227,17 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 	}
 
 	// write message
-	err = w.WriteMsg(response)
+	err = w.WriteMsg(rs)
 	if err != nil {
-		s.reportError(r, err.Error())
+		s.reportError(rq, err.Error())
 		return
 	}
 }
 
-func (s *Server) writeSOAResponse(w dns.ResponseWriter, r *dns.Msg, zone *Zone) {
-	// prepare response
-	response := new(dns.Msg)
-	response.SetReply(r)
-
-	// always compress responses
-	response.Compress = true
+func (s *Server) writeSOAResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone) {
 
 	// add soa record
-	response.Answer = append(response.Answer, &dns.SOA{
+	rs.Answer = append(rs.Answer, &dns.SOA{
 		Hdr: dns.RR_Header{
 			Name:   zone.Name,
 			Rrtype: dns.TypeSOA,
@@ -243,7 +255,7 @@ func (s *Server) writeSOAResponse(w dns.ResponseWriter, r *dns.Msg, zone *Zone) 
 
 	// add ns records
 	for _, ns := range zone.AllNameServers {
-		response.Ns = append(response.Ns, &dns.NS{
+		rs.Ns = append(rs.Ns, &dns.NS{
 			Hdr: dns.RR_Header{
 				Name:   zone.Name,
 				Rrtype: dns.TypeNS,
@@ -254,31 +266,18 @@ func (s *Server) writeSOAResponse(w dns.ResponseWriter, r *dns.Msg, zone *Zone) 
 		})
 	}
 
-	// set flag
-	response.Authoritative = true
-
 	// write message
-	err := w.WriteMsg(response)
+	err := w.WriteMsg(rs)
 	if err != nil {
-		s.reportError(r, err.Error())
+		s.reportError(rq, err.Error())
 		return
 	}
 }
 
-func (s *Server) writeNSResponse(w dns.ResponseWriter, r *dns.Msg, zone *Zone) {
-	// prepare response
-	response := new(dns.Msg)
-	response.SetReply(r)
-
-	// always compress responses
-	response.Compress = true
-
-	// set flag
-	response.Authoritative = true
-
+func (s *Server) writeNSResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone) {
 	// add ns records
 	for _, ns := range zone.AllNameServers {
-		response.Answer = append(response.Answer, &dns.NS{
+		rs.Answer = append(rs.Answer, &dns.NS{
 			Hdr: dns.RR_Header{
 				Name:   zone.Name,
 				Rrtype: dns.TypeNS,
@@ -290,23 +289,19 @@ func (s *Server) writeNSResponse(w dns.ResponseWriter, r *dns.Msg, zone *Zone) {
 	}
 
 	// write message
-	err := w.WriteMsg(response)
+	err := w.WriteMsg(rs)
 	if err != nil {
-		s.reportError(r, err.Error())
+		s.reportError(rq, err.Error())
 		return
 	}
 }
 
-func (s *Server) writeErrorWithSOA(w dns.ResponseWriter, r *dns.Msg, zone *Zone, code int) {
-	// prepare response
-	response := new(dns.Msg)
-	response.SetRcode(r, code)
-
-	// always compress responses
-	response.Compress = true
+func (s *Server) writeErrorWithSOA(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, code int) {
+	// set code
+	rs.Rcode = code
 
 	// add soa record
-	response.Ns = append(response.Ns, &dns.SOA{
+	rs.Ns = append(rs.Ns, &dns.SOA{
 		Hdr: dns.RR_Header{
 			Name:   zone.Name,
 			Rrtype: dns.TypeSOA,
@@ -322,13 +317,10 @@ func (s *Server) writeErrorWithSOA(w dns.ResponseWriter, r *dns.Msg, zone *Zone,
 		Minttl:  durationToTime(zone.MinTTL),
 	})
 
-	// set flag
-	response.Authoritative = true
-
 	// write message
-	err := w.WriteMsg(response)
+	err := w.WriteMsg(rs)
 	if err != nil {
-		s.reportError(r, err.Error())
+		s.reportError(rq, err.Error())
 		return
 	}
 }
