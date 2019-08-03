@@ -182,6 +182,17 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 		}
 	}
 
+	// add alternative records
+	if len(response.Answer) == 0 {
+		for _, record := range records {
+			// add A, AAAA or CNAME record
+			if record.Type == TypeA || record.Type == TypeAAAA || record.Type == TypeCNAME {
+				response.Answer = append(response.Answer, record.convert(name, zone))
+				break
+			}
+		}
+	}
+
 	// add ns records
 	for _, ns := range zone.AllNameServers {
 		response.Ns = append(response.Ns, &dns.NS{
