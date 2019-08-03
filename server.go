@@ -102,14 +102,14 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 	// check opcode
 	if rq.Opcode != dns.OpcodeQuery {
-		s.writeError(w, rq, dns.RcodeNotImplemented)
+		s.writeError(w, rs, dns.RcodeNotImplemented)
 		s.reportError(rq, "opcode is not query")
 		return
 	}
 
 	// ignore to less or too many questions
 	if len(rq.Question) != 1 {
-		s.writeError(w, rq, dns.RcodeNotImplemented)
+		s.writeError(w, rs, dns.RcodeNotImplemented)
 		s.reportError(rq, "too many questions")
 		return
 	}
@@ -119,7 +119,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 	// check class
 	if question.Qclass != dns.ClassINET {
-		s.writeError(w, rq, dns.RcodeNotImplemented)
+		s.writeError(w, rs, dns.RcodeNotImplemented)
 		s.reportError(rq, "unsupported question class")
 		return
 	}
@@ -130,21 +130,21 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	// get zone
 	zone, err := s.config.Handler(name)
 	if err != nil {
-		s.writeError(w, rq, dns.RcodeServerFailure)
+		s.writeError(w, rs, dns.RcodeServerFailure)
 		s.reportError(rq, err.Error())
 		return
 	}
 
 	// check zone
 	if zone == nil {
-		s.writeError(w, rq, dns.RcodeNameError)
+		s.writeError(w, rs, dns.RcodeNameError)
 		return
 	}
 
 	// validate zone
 	err = zone.Validate()
 	if err != nil {
-		s.writeError(w, rq, dns.RcodeServerFailure)
+		s.writeError(w, rs, dns.RcodeServerFailure)
 		s.reportError(rq, err.Error())
 		return
 	}
@@ -164,7 +164,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	// get sets
 	sets, err := zone.Handler(TrimZone(zone.Name, name))
 	if err != nil {
-		s.writeError(w, rq, dns.RcodeServerFailure)
+		s.writeError(w, rs, dns.RcodeServerFailure)
 		s.reportError(rq, err.Error())
 		return
 	}
@@ -183,7 +183,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	for _, set := range sets {
 		err = set.Validate()
 		if err != nil {
-			s.writeError(w, rq, dns.RcodeServerFailure)
+			s.writeError(w, rs, dns.RcodeServerFailure)
 			s.reportError(rq, err.Error())
 			return
 		}
@@ -227,11 +227,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	}
 
 	// write message
-	err = w.WriteMsg(rs)
-	if err != nil {
-		s.reportError(rq, err.Error())
-		return
-	}
+	s.writeMessage(w, rq, rs)
 }
 
 func (s *Server) writeSOAResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone) {
@@ -267,11 +263,7 @@ func (s *Server) writeSOAResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Z
 	}
 
 	// write message
-	err := w.WriteMsg(rs)
-	if err != nil {
-		s.reportError(rq, err.Error())
-		return
-	}
+	s.writeMessage(w, rq, rs)
 }
 
 func (s *Server) writeNSResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone) {
@@ -289,11 +281,7 @@ func (s *Server) writeNSResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zo
 	}
 
 	// write message
-	err := w.WriteMsg(rs)
-	if err != nil {
-		s.reportError(rq, err.Error())
-		return
-	}
+	s.writeMessage(w, rq, rs)
 }
 
 func (s *Server) writeErrorWithSOA(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, code int) {
@@ -318,18 +306,22 @@ func (s *Server) writeErrorWithSOA(w dns.ResponseWriter, rq, rs *dns.Msg, zone *
 	})
 
 	// write message
+	s.writeMessage(w, rq, rs)
+}
+
+func (s *Server) writeMessage(w dns.ResponseWriter, rq, rs *dns.Msg) {
 	err := w.WriteMsg(rs)
 	if err != nil {
+		_ = w.Close()
 		s.reportError(rq, err.Error())
 		return
 	}
 }
 
-func (s *Server) writeError(w dns.ResponseWriter, r *dns.Msg, code int) {
-	m := new(dns.Msg)
-	m.SetRcode(r, code)
-	m.SetRcodeFormatError(r)
-	_ = w.WriteMsg(m)
+func (s *Server) writeError(w dns.ResponseWriter, rs *dns.Msg, code int) {
+	rs.Rcode = code
+	_ = w.WriteMsg(rs)
+	_ = w.Close()
 }
 
 func (s *Server) reportError(r *dns.Msg, msg string) {
