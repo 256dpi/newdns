@@ -631,68 +631,45 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("MissingA", func(t *testing.T) {
-		ret, err := query(proto, addr, "missing.newdns.256dpi.com.", "A", false)
-		assert.NoError(t, err)
-		equalJSON(t, &dns.Msg{
-			MsgHdr: dns.MsgHdr{
-				Response:      true,
-				Authoritative: true,
-				Rcode:         dns.RcodeNameError,
-			},
-			Question: []dns.Question{
-				{Name: "missing.newdns.256dpi.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
-			},
-			Ns: []dns.RR{
-				&dns.SOA{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeSOA,
-						Class:    dns.ClassINET,
-						Ttl:      900,
-						Rdlength: 66,
-					},
-					Ns:      awsPrimaryNS,
-					Mbox:    "awsdns-hostmaster.amazon.com.",
-					Serial:  1,
-					Refresh: 7200,
-					Retry:   900,
-					Expire:  1209600,
-					Minttl:  300,
-				},
-			},
-		}, ret)
+		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "A")
 	})
 
 	t.Run("MissingCNAME", func(t *testing.T) {
-		ret, err := query(proto, addr, "missing.newdns.256dpi.com.", "CNAME", false)
-		assert.NoError(t, err)
-		equalJSON(t, &dns.Msg{
-			MsgHdr: dns.MsgHdr{
-				Response:      true,
-				Authoritative: true,
-				Rcode:         dns.RcodeNameError,
-			},
-			Question: []dns.Question{
-				{Name: "missing.newdns.256dpi.com.", Qtype: dns.TypeCNAME, Qclass: dns.ClassINET},
-			},
-			Ns: []dns.RR{
-				&dns.SOA{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeSOA,
-						Class:    dns.ClassINET,
-						Ttl:      900,
-						Rdlength: 66,
-					},
-					Ns:      awsPrimaryNS,
-					Mbox:    "awsdns-hostmaster.amazon.com.",
-					Serial:  1,
-					Refresh: 7200,
-					Retry:   900,
-					Expire:  1209600,
-					Minttl:  300,
-				},
-			},
-		}, ret)
+		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "CNAME")
 	})
+}
+
+func assertMissing(t *testing.T, proto, addr, name, typ string) {
+	qt := dns.StringToType[typ]
+
+	ret, err := query(proto, addr, name, typ, false)
+	assert.NoError(t, err)
+	equalJSON(t, &dns.Msg{
+		MsgHdr: dns.MsgHdr{
+			Response:      true,
+			Authoritative: true,
+			Rcode:         dns.RcodeNameError,
+		},
+		Question: []dns.Question{
+			{Name: name, Qtype: qt, Qclass: dns.ClassINET},
+		},
+		Ns: []dns.RR{
+			&dns.SOA{
+				Hdr: dns.RR_Header{
+					Name:     "newdns.256dpi.com.",
+					Rrtype:   dns.TypeSOA,
+					Class:    dns.ClassINET,
+					Ttl:      900,
+					Rdlength: 66,
+				},
+				Ns:      awsPrimaryNS,
+				Mbox:    "awsdns-hostmaster.amazon.com.",
+				Serial:  1,
+				Refresh: 7200,
+				Retry:   900,
+				Expire:  1209600,
+				Minttl:  300,
+			},
+		},
+	}, ret)
 }
