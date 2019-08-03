@@ -50,6 +50,13 @@ func TestServerUDP(t *testing.T) {
 				}, nil
 			}
 
+			// handle example
+			if name == "example" {
+				return []Record{
+					{Type: TypeCNAME, Address: "example.com"},
+				}, nil
+			}
+
 			return nil, nil
 		},
 	}
@@ -372,6 +379,74 @@ func abstractTest(t *testing.T, proto, addr string) {
 						Rdlength: 8,
 					},
 					Txt: []string{"foo", "bar"},
+				},
+			},
+			Ns: []dns.RR{
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 23,
+					},
+					Ns: awsNS[0],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 19,
+					},
+					Ns: awsNS[1],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 25,
+					},
+					Ns: awsNS[2],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 22,
+					},
+					Ns: awsNS[3],
+				},
+			},
+		}, ret)
+	})
+
+	t.Run("SubCNAME", func(t *testing.T) {
+		ret, err := query(proto, addr, "example.newdns.256dpi.com.", "CNAME", false)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "example.newdns.256dpi.com.", Qtype: dns.TypeCNAME, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:     "example.newdns.256dpi.com.",
+						Rrtype:   dns.TypeCNAME,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 10,
+					},
+					Target: "example.com.",
 				},
 			},
 			Ns: []dns.RR{
