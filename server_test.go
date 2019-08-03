@@ -107,6 +107,30 @@ func TestServer(t *testing.T) {
 				}, nil
 			}
 
+			// handle mail
+			if name == "mail" {
+				return []Set{
+					{
+						Type: TypeMX,
+						Records: []Record{
+							{Address: "mail.example.com.", Priority: 7},
+						},
+					},
+				}, nil
+			}
+
+			// handle text
+			if name == "text" {
+				return []Set{
+					{
+						Type: TypeTXT,
+						Records: []Record{
+							{Data: []string{"foo", "bar"}},
+						},
+					},
+				}, nil
+			}
+
 			return nil, nil
 		},
 	}
@@ -266,6 +290,39 @@ func abstractTest(t *testing.T, proto, addr string) {
 						Rdlength: 22,
 					},
 					Ns: awsNS[3],
+				},
+			},
+		}, ret)
+	})
+
+	t.Run("ApexCNAME", func(t *testing.T) {
+		ret, err := query(proto, addr, "newdns.256dpi.com.", "CNAME", false)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+				Rcode:         dns.RcodeSuccess,
+			},
+			Question: []dns.Question{
+				{Name: "newdns.256dpi.com.", Qtype: dns.TypeCNAME, Qclass: dns.ClassINET},
+			},
+			Ns: []dns.RR{
+				&dns.SOA{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeSOA,
+						Class:    dns.ClassINET,
+						Ttl:      900,
+						Rdlength: 66,
+					},
+					Ns:      awsPrimaryNS,
+					Mbox:    "awsdns-hostmaster.amazon.com.",
+					Serial:  1,
+					Refresh: 7200,
+					Retry:   900,
+					Expire:  1209600,
+					Minttl:  300,
 				},
 			},
 		}, ret)
@@ -636,6 +693,143 @@ func abstractTest(t *testing.T, proto, addr string) {
 						Rdlength: 10,
 					},
 					Target: "example.com.",
+				},
+			},
+			Ns: []dns.RR{
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 23,
+					},
+					Ns: awsNS[0],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 19,
+					},
+					Ns: awsNS[1],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 25,
+					},
+					Ns: awsNS[2],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 22,
+					},
+					Ns: awsNS[3],
+				},
+			},
+		}, ret)
+	})
+
+	t.Run("SubMX", func(t *testing.T) {
+		ret, err := query(proto, addr, "mail.newdns.256dpi.com.", "MX", false)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "mail.newdns.256dpi.com.", Qtype: dns.TypeMX, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.MX{
+					Hdr: dns.RR_Header{
+						Name:     "mail.newdns.256dpi.com.",
+						Rrtype:   dns.TypeMX,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 17,
+					},
+					Mx:         "mail.example.com.",
+					Preference: 7,
+				},
+			},
+			Ns: []dns.RR{
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 23,
+					},
+					Ns: awsNS[0],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 19,
+					},
+					Ns: awsNS[1],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 25,
+					},
+					Ns: awsNS[2],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 22,
+					},
+					Ns: awsNS[3],
+				},
+			},
+		}, ret)
+	})
+
+	t.Run("SubTXT", func(t *testing.T) {
+		ret, err := query(proto, addr, "text.newdns.256dpi.com.", "TXT", false)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "text.newdns.256dpi.com.", Qtype: dns.TypeTXT, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.TXT{
+					Hdr: dns.RR_Header{
+						Name:     "text.newdns.256dpi.com.",
+						Rrtype:   dns.TypeTXT,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 8,
+					},
+					Txt: []string{"foo", "bar"},
 				},
 			},
 			Ns: []dns.RR{
