@@ -77,15 +77,15 @@ func (s *Server) Close() {
 func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 	// check opcode
 	if r.Opcode != dns.OpcodeQuery {
-		s.writeErr(w, r, dns.RcodeNotImplemented)
-		s.reportErr(r, "opcode is not query")
+		s.writeError(w, r, dns.RcodeNotImplemented)
+		s.reportError(r, "opcode is not query")
 		return
 	}
 
 	// ignore to less or too many questions
 	if len(r.Question) != 1 {
-		s.writeErr(w, r, dns.RcodeNotImplemented)
-		s.reportErr(r, "too many questions")
+		s.writeError(w, r, dns.RcodeNotImplemented)
+		s.reportError(r, "too many questions")
 		return
 	}
 
@@ -94,8 +94,8 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 
 	// check class
 	if question.Qclass != dns.ClassINET {
-		s.writeErr(w, r, dns.RcodeNotImplemented)
-		s.reportErr(r, "unsupported question class")
+		s.writeError(w, r, dns.RcodeNotImplemented)
+		s.reportError(r, "unsupported question class")
 		return
 	}
 
@@ -105,22 +105,22 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 	// get zone
 	zone, err := s.config.Handler(name)
 	if err != nil {
-		s.writeErr(w, r, dns.RcodeServerFailure)
-		s.reportErr(r, err.Error())
+		s.writeError(w, r, dns.RcodeServerFailure)
+		s.reportError(r, err.Error())
 		return
 	}
 
 	// check zone
 	if zone == nil {
-		s.writeErr(w, r, dns.RcodeNameError)
+		s.writeError(w, r, dns.RcodeNameError)
 		return
 	}
 
 	// validate zone
 	err = zone.Validate()
 	if err != nil {
-		s.writeErr(w, r, dns.RcodeServerFailure)
-		s.reportErr(r, err.Error())
+		s.writeError(w, r, dns.RcodeServerFailure)
+		s.reportError(r, err.Error())
 		return
 	}
 
@@ -139,14 +139,15 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 	// get sets
 	sets, err := zone.Handler(TrimZone(zone.Name, name))
 	if err != nil {
-		s.writeErr(w, r, dns.RcodeServerFailure)
-		s.reportErr(r, err.Error())
+		s.writeError(w, r, dns.RcodeServerFailure)
+		s.reportError(r, err.Error())
 		return
 	}
 
 	// check sets
 	if len(sets) == 0 {
-		s.writeNameError(w, r, zone)
+		s.writeErrorWithSOA(w, r, zone, dns.RcodeNameError)
+		s.reportError(r, "no sets")
 		return
 	}
 
@@ -154,8 +155,8 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 	for _, set := range sets {
 		err = set.Validate()
 		if err != nil {
-			s.writeErr(w, r, dns.RcodeServerFailure)
-			s.reportErr(r, err.Error())
+			s.writeError(w, r, dns.RcodeServerFailure)
+			s.reportError(r, err.Error())
 			return
 		}
 	}
@@ -172,21 +173,26 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 
 	// add matching set
 	for _, set := range sets {
-		// add matching answer
 		if uint16(set.Type) == question.Qtype {
 			response.Answer = set.convert(zone, name)
 		}
 	}
 
-	// add A, AAAA or CNAME set as alternative
-	if len(response.Answer) == 0 {
+	// return CNAME set for A and AAAA queries
+	if len(response.Answer) == 0 && (question.Qtype == dns.TypeA || question.Qtype == dns.TypeAAAA) {
 		for _, set := range sets {
-			// add A, AAAA or CNAME record
-			if set.Type == TypeA || set.Type == TypeAAAA || set.Type == TypeCNAME {
+			if set.Type == TypeCNAME {
 				response.Answer = set.convert(zone, name)
 				break
 			}
 		}
+	}
+
+	// write SOA with success code to indicate available other sets
+	if len(response.Answer) == 0 {
+		s.writeErrorWithSOA(w, r, zone, dns.RcodeSuccess)
+		s.reportError(r, "no answer")
+		return
 	}
 
 	// add ns records
@@ -205,7 +211,7 @@ func (s *Server) handler(w dns.ResponseWriter, r *dns.Msg) {
 	// write message
 	err = w.WriteMsg(response)
 	if err != nil {
-		s.reportErr(r, err.Error())
+		s.reportError(r, err.Error())
 		return
 	}
 }
@@ -254,7 +260,7 @@ func (s *Server) writeSOAResponse(w dns.ResponseWriter, r *dns.Msg, zone *Zone) 
 	// write message
 	err := w.WriteMsg(response)
 	if err != nil {
-		s.reportErr(r, err.Error())
+		s.reportError(r, err.Error())
 		return
 	}
 }
@@ -286,15 +292,15 @@ func (s *Server) writeNSResponse(w dns.ResponseWriter, r *dns.Msg, zone *Zone) {
 	// write message
 	err := w.WriteMsg(response)
 	if err != nil {
-		s.reportErr(r, err.Error())
+		s.reportError(r, err.Error())
 		return
 	}
 }
 
-func (s *Server) writeNameError(w dns.ResponseWriter, r *dns.Msg, zone *Zone) {
+func (s *Server) writeErrorWithSOA(w dns.ResponseWriter, r *dns.Msg, zone *Zone, code int) {
 	// prepare response
 	response := new(dns.Msg)
-	response.SetRcode(r, dns.RcodeNameError)
+	response.SetRcode(r, code)
 
 	// always compress responses
 	response.Compress = true
@@ -322,19 +328,19 @@ func (s *Server) writeNameError(w dns.ResponseWriter, r *dns.Msg, zone *Zone) {
 	// write message
 	err := w.WriteMsg(response)
 	if err != nil {
-		s.reportErr(r, err.Error())
+		s.reportError(r, err.Error())
 		return
 	}
 }
 
-func (s *Server) writeErr(w dns.ResponseWriter, r *dns.Msg, rCode int) {
+func (s *Server) writeError(w dns.ResponseWriter, r *dns.Msg, code int) {
 	m := new(dns.Msg)
-	m.SetRcode(r, rCode)
+	m.SetRcode(r, code)
 	m.SetRcodeFormatError(r)
 	_ = w.WriteMsg(m)
 }
 
-func (s *Server) reportErr(r *dns.Msg, msg string) {
+func (s *Server) reportError(r *dns.Msg, msg string) {
 	if s.config.Reporter != nil {
 		s.config.Reporter(fmt.Errorf("%s: %+v", msg, r))
 	}

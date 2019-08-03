@@ -119,9 +119,6 @@ func TestServer(t *testing.T) {
 
 			return nil, nil
 		},
-		Reporter: func(err error) {
-			panic(err)
-		},
 	})
 
 	addr := "0.0.0.0:53001"
@@ -822,16 +819,23 @@ func abstractTest(t *testing.T, proto, addr string) {
 		}, ret)
 	})
 
+	t.Run("NoExactRecord", func(t *testing.T) {
+		assertMissing(t, proto, addr, "ip4.newdns.256dpi.com.", "CNAME", dns.RcodeSuccess)
+		assertMissing(t, proto, addr, "ip6.newdns.256dpi.com.", "CNAME", dns.RcodeSuccess)
+		assertMissing(t, proto, addr, "ip4.newdns.256dpi.com.", "AAAA", dns.RcodeSuccess)
+		assertMissing(t, proto, addr, "ip6.newdns.256dpi.com.", "A", dns.RcodeSuccess)
+	})
+
 	t.Run("MissingRecords", func(t *testing.T) {
-		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "A")
-		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "AAAA")
-		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "CNAME")
-		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "MX")
-		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "TXT")
+		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "A", dns.RcodeNameError)
+		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "AAAA", dns.RcodeNameError)
+		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "CNAME", dns.RcodeNameError)
+		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "MX", dns.RcodeNameError)
+		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "TXT", dns.RcodeNameError)
 	})
 }
 
-func assertMissing(t *testing.T, proto, addr, name, typ string) {
+func assertMissing(t *testing.T, proto, addr, name, typ string, code int) {
 	qt := dns.StringToType[typ]
 
 	ret, err := query(proto, addr, name, typ, false)
@@ -840,7 +844,7 @@ func assertMissing(t *testing.T, proto, addr, name, typ string) {
 		MsgHdr: dns.MsgHdr{
 			Response:      true,
 			Authoritative: true,
-			Rcode:         dns.RcodeNameError,
+			Rcode:         code,
 		},
 		Question: []dns.Question{
 			{Name: name, Qtype: qt, Qclass: dns.ClassINET},
