@@ -494,7 +494,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 		}, ret)
 	})
 
-	t.Run("SubAForCNAME", func(t *testing.T) {
+	t.Run("SubCNAMEForA", func(t *testing.T) {
 		ret, err := query(proto, addr, "example.newdns.256dpi.com.", "A", false)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
@@ -504,6 +504,74 @@ func abstractTest(t *testing.T, proto, addr string) {
 			},
 			Question: []dns.Question{
 				{Name: "example.newdns.256dpi.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:     "example.newdns.256dpi.com.",
+						Rrtype:   dns.TypeCNAME,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 10,
+					},
+					Target: "example.com.",
+				},
+			},
+			Ns: []dns.RR{
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 23,
+					},
+					Ns: awsNS[0],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 19,
+					},
+					Ns: awsNS[1],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 25,
+					},
+					Ns: awsNS[2],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 22,
+					},
+					Ns: awsNS[3],
+				},
+			},
+		}, ret)
+	})
+
+	t.Run("SubCNAMEForAAAA", func(t *testing.T) {
+		ret, err := query(proto, addr, "example.newdns.256dpi.com.", "AAAA", false)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "example.newdns.256dpi.com.", Qtype: dns.TypeAAAA, Qclass: dns.ClassINET},
 			},
 			Answer: []dns.RR{
 				&dns.CNAME{
