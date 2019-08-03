@@ -46,7 +46,7 @@ func (r *Record) Validate(typ Type) error {
 
 	// check txt data
 	if typ == TypeTXT && len(r.Data) == 0 {
-		return fmt.Errorf("missing txt data")
+		return fmt.Errorf("missing data")
 	}
 
 	return nil

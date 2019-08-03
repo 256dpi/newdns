@@ -61,7 +61,7 @@ func TestRecord(t *testing.T) {
 		{
 			typ: TypeTXT,
 			rec: Record{Data: nil},
-			err: "missing txt data",
+			err: "missing data",
 		},
 		{
 			typ: TypeTXT,
