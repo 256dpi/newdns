@@ -36,7 +36,7 @@ func (s *Set) Validate() error {
 
 	// validate records
 	for _, record := range s.Records {
-		err := record.Validate(s)
+		err := record.Validate(s.Type)
 		if err != nil {
 			return err
 		}

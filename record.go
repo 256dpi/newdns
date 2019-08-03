@@ -20,23 +20,32 @@ type Record struct {
 }
 
 // Validate will validate the record.
-func (r *Record) Validate(set *Set) error {
-	// validate A and AAAA addresses
-	if set.Type == TypeA || set.Type == TypeAAAA {
-		if net.ParseIP(r.Address) == nil {
-			return fmt.Errorf("invalid ip address")
+func (r *Record) Validate(typ Type) error {
+	// validate A address
+	if typ == TypeA {
+		ip := net.ParseIP(r.Address)
+		if ip == nil || ip.To4() == nil {
+			return fmt.Errorf("invalid IPv4 address")
+		}
+	}
+
+	// validate  AAAA address
+	if typ == TypeAAAA {
+		ip := net.ParseIP(r.Address)
+		if ip == nil || ip.To16() == nil {
+			return fmt.Errorf("invalid IPv6 address")
 		}
 	}
 
 	// validate CNAME and MX addresses
-	if set.Type == TypeCNAME || set.Type == TypeMX {
-		if _, ok := dns.IsDomainName(r.Address); !ok {
+	if typ == TypeCNAME || typ == TypeMX {
+		if _, ok := dns.IsDomainName(r.Address); !ok || !dns.IsFqdn(r.Address) {
 			return fmt.Errorf("invalid domain address")
 		}
 	}
 
 	// check txt data
-	if set.Type == TypeTXT && len(r.Data) == 0 {
+	if typ == TypeTXT && len(r.Data) == 0 {
 		return fmt.Errorf("missing txt data")
 	}
 
