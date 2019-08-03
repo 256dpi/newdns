@@ -630,12 +630,12 @@ func abstractTest(t *testing.T, proto, addr string) {
 		}, ret)
 	})
 
-	t.Run("MissingA", func(t *testing.T) {
+	t.Run("MissingRecords", func(t *testing.T) {
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "A")
-	})
-
-	t.Run("MissingCNAME", func(t *testing.T) {
+		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "AAAA")
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "CNAME")
+		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "MX")
+		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "TXT")
 	})
 }
 
