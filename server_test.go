@@ -18,11 +18,17 @@ var awsNS = []string{
 
 const awsPrimaryNS = "ns-140.awsdns-17.com."
 
-func TestAWSUDP(t *testing.T) {
-	abstractTest(t, "udp", awsPrimaryNS+":53")
+func TestAWS(t *testing.T) {
+	t.Run("UDP", func(t *testing.T) {
+		abstractTest(t, "udp", awsPrimaryNS+":53")
+	})
+
+	t.Run("TCP", func(t *testing.T) {
+		abstractTest(t, "tcp", awsPrimaryNS+":53")
+	})
 }
 
-func TestServerUDP(t *testing.T) {
+func TestServer(t *testing.T) {
 	zone := &Zone{
 		Name:             "newdns.256dpi.com.",
 		MasterNameServer: awsPrimaryNS,
@@ -91,7 +97,13 @@ func TestServerUDP(t *testing.T) {
 	addr := "0.0.0.0:53001"
 
 	run(server, addr, func() {
-		abstractTest(t, "udp", addr)
+		t.Run("UDP", func(t *testing.T) {
+			abstractTest(t, "udp", addr)
+		})
+
+		t.Run("TCP", func(t *testing.T) {
+			abstractTest(t, "tcp", addr)
+		})
 	})
 }
 
