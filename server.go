@@ -219,6 +219,36 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 		return
 	}
 
+	// check if answer is a CNAME that belongs to this zone
+	if cname, ok := rs.Answer[0].(*dns.CNAME); ok && InZone(zone.Name, cname.Target) {
+		println("following cname", cname.Target)
+
+		// get additional sets
+		addSets, err := zone.Handler(TrimZone(zone.Name, cname.Target))
+		if err != nil {
+			s.writeError(w, rs, dns.RcodeServerFailure)
+			s.reportError(rq, err.Error())
+			return
+		}
+
+		// validate additional sets
+		for _, set := range addSets {
+			err = set.Validate()
+			if err != nil {
+				s.writeError(w, rs, dns.RcodeServerFailure)
+				s.reportError(rq, err.Error())
+				return
+			}
+		}
+
+		// add matching A and AAAA sets
+		for _, set := range addSets {
+			if set.Type == TypeA || set.Type == TypeAAAA {
+				rs.Answer = append(rs.Answer, set.convert(zone, cname.Target)...)
+			}
+		}
+	}
+
 	// add ns records
 	for _, ns := range zone.AllNameServers {
 		rs.Ns = append(rs.Ns, &dns.NS{
