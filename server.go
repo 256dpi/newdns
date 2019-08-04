@@ -115,7 +115,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 	// ignore to less or too many questions
 	if len(rq.Question) != 1 {
-		s.writeError(w, rs, dns.RcodeNotImplemented)
+		s.writeError(w, rs, dns.RcodeRefused)
 		s.reportError(rq, "too many questions")
 		return
 	}
