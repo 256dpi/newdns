@@ -34,6 +34,11 @@ func (s *Set) Validate() error {
 		return fmt.Errorf("missing records")
 	}
 
+	// check CNAME records
+	if s.Type == TypeCNAME && len(s.Records) > 1 {
+		return fmt.Errorf("multiple CNAME records")
+	}
+
 	// validate records
 	for _, record := range s.Records {
 		err := record.Validate(s.Type)
@@ -66,4 +71,3 @@ func (s *Set) convert(zone *Zone, name string) []dns.RR {
 
 	return list
 }
-

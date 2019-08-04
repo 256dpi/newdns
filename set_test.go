@@ -27,6 +27,10 @@ func TestSet(t *testing.T) {
 			set: Set{Type: TypeTXT, Records: []Record{{}}},
 			err: "missing data",
 		},
+		{
+			set: Set{Type: TypeCNAME, Records: []Record{{},{}}},
+			err: "multiple CNAME records",
+		},
 	}
 
 	for i, item := range table {
