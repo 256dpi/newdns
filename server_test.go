@@ -1445,7 +1445,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 		}, ret)
 	})
 
-	t.Run("SubMXWithA", func(t *testing.T) {
+	t.Run("SubMXWithExtraA", func(t *testing.T) {
 		ret, err := query(proto, addr, "refm.newdns.256dpi.com.", "MX", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
