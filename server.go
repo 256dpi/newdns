@@ -47,8 +47,8 @@ func (s *Server) Run(addr string) error {
 	dns.HandleFunc(".", s.handler)
 
 	// prepare servers
-	udp := &dns.Server{Addr: addr, Net: "udp"}
-	tcp := &dns.Server{Addr: addr, Net: "tcp"}
+	udp := &dns.Server{Addr: addr, Net: "udp", MsgAcceptFunc: s.accept}
+	tcp := &dns.Server{Addr: addr, Net: "tcp", MsgAcceptFunc: s.accept}
 
 	// prepare errors
 	errs := make(chan error, 2)
@@ -82,6 +82,35 @@ func (s *Server) Close() {
 	close(s.close)
 }
 
+func (s *Server) accept(dh dns.Header) dns.MsgAcceptAction {
+	// check if query
+	if dh.Bits&(1<<15) != 0 {
+		return dns.MsgIgnore
+	}
+
+	// check opcode
+	if int(dh.Bits>>11) & 0xF != dns.OpcodeQuery  {
+		return dns.MsgIgnore
+	}
+
+	// check question count
+	if dh.Qdcount != 1 {
+		return dns.MsgReject
+	}
+
+	// check answer and authoritative records
+	if dh.Ancount > 0 || dh.Nscount > 0 {
+		return dns.MsgReject
+	}
+
+	// check additional records
+	if dh.Arcount > 2 {
+		return dns.MsgReject
+	}
+
+	return dns.MsgAccept
+}
+
 func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	// prepare response
 	rs := new(dns.Msg)
@@ -104,20 +133,6 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 		// use edns in reply
 		rs.SetEdns0(uint16(s.config.BufferSize), false)
-	}
-
-	// check opcode
-	if rq.Opcode != dns.OpcodeQuery {
-		s.writeError(w, rs, dns.RcodeNotImplemented)
-		s.reportError(rq, "opcode is not query")
-		return
-	}
-
-	// ignore to less or too many questions
-	if len(rq.Question) != 1 {
-		s.writeError(w, rs, dns.RcodeRefused)
-		s.reportError(rq, "too many questions")
-		return
 	}
 
 	// get question

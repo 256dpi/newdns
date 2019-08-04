@@ -1741,15 +1741,33 @@ func abstractTest(t *testing.T, proto, addr string) {
 		}, ret)
 	})
 
+	t.Run("UnsupportedOpcode", func(t *testing.T) {
+		_, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+			msg.Opcode = dns.OpcodeNotify
+		})
+		assert.Error(t, err)
+	})
+
 	t.Run("UnsupportedClass", func(t *testing.T) {
-		_, err := query(proto, addr, "ip4.newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+		_, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.Question[0].Qclass = dns.ClassANY
 		})
 		assert.Error(t, err)
 	})
 
 	t.Run("UnsupportedType", func(t *testing.T) {
-		assertMissing(t, proto, addr, "ip4.newdns.256dpi.com.", "NULL", dns.RcodeSuccess)
+		assertMissing(t, proto, addr, "newdns.256dpi.com.", "NULL", dns.RcodeSuccess)
+	})
+
+	t.Run("MultipleQuestions", func(t *testing.T) {
+		_, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+			msg.Question = append(msg.Question, dns.Question{
+				Name:   "newdns.256dpi.com",
+				Qtype:  dns.TypeA,
+				Qclass: dns.ClassINET,
+			})
+		})
+		assert.Error(t, err)
 	})
 }
 
