@@ -182,17 +182,37 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 		return
 	}
 
-	// TODO: A CNAME set must be alone for a label.
-	// TODO: Do not allow CNAME sets for apex domain.
+	// prepare flag
+	isCNAME := false
 
 	// validate sets
 	for _, set := range sets {
+		// check set
 		err = set.Validate()
 		if err != nil {
 			s.writeError(w, rs, dns.RcodeServerFailure)
 			s.reportError(rq, err.Error())
 			return
 		}
+
+		// set flag
+		if set.Type == TypeCNAME {
+			isCNAME = true
+		}
+	}
+
+	// check apex CNAME
+	if isCNAME && name == zone.Name {
+		s.writeError(w, rs, dns.RcodeServerFailure)
+		s.reportError(rq, "invalid CNAME at apex")
+		return
+	}
+
+	// check CNAME is stand-alone
+	if isCNAME && (len(sets) > 0) {
+		s.writeError(w, rs, dns.RcodeServerFailure)
+		s.reportError(rq, "a CNAME set must be stand-alone")
+		return
 	}
 
 	// add matching set
