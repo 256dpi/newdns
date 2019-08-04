@@ -8,6 +8,13 @@ import (
 	"github.com/miekg/dns"
 )
 
+// IsDomain returns whether the name is a valid domain and if requested also
+// fully qualified.
+func IsDomain(name string, fqdn bool) bool {
+	_, ok := dns.IsDomainName(name)
+	return ok && (!fqdn || fqdn && dns.IsFqdn(name))
+}
+
 // InZone returns whether the provided name is part of the provided zone.
 func InZone(zone, name string) bool {
 	return dns.IsSubDomain(zone, name)

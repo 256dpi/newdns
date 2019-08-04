@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"sort"
 	"time"
-
-	"github.com/miekg/dns"
 )
 
 // Zone describes a single authoritative DNS zone.
@@ -18,7 +16,8 @@ type Zone struct {
 	MasterNameServer string
 
 	// A list of FQDNs to all authoritative name servers for this zone. The
-	// FQDNs must be returned as A and AAAA records by the parent zone.
+	// FQDNs must be returned as A and AAAA records by the parent zone. It is
+	// advised to announce at least two distinct name servers per zone.
 	AllNameServers []string
 
 	// The email address of the administrator e.g. "hostmaster@example.com".
@@ -65,18 +64,18 @@ type Zone struct {
 // Validate will validate the zone and ensure the documented defaults.
 func (z *Zone) Validate() error {
 	// check name
-	if !dns.IsFqdn(z.Name) {
+	if !IsDomain(z.Name, true) {
 		return fmt.Errorf("name not fully qualified")
 	}
 
 	// check master name server
-	if !dns.IsFqdn(z.MasterNameServer) {
+	if !IsDomain(z.MasterNameServer, true) {
 		return fmt.Errorf("master server not full qualified")
 	}
 
 	// check name servers
 	for _, ns := range z.AllNameServers {
-		if !dns.IsFqdn(ns) {
+		if !IsDomain(ns, true) {
 			return fmt.Errorf("additional name server not fully qualified")
 		}
 	}
@@ -87,6 +86,11 @@ func (z *Zone) Validate() error {
 	// set default admin email
 	if z.AdminEmail == "" {
 		z.AdminEmail = fmt.Sprintf("hostmaster@%s", z.Name)
+	}
+
+	// check admin email
+	if !IsDomain(emailToDomain(z.AdminEmail), true) {
+		return fmt.Errorf("admin email cannot be converted to a domain name")
 	}
 
 	// set default refresh

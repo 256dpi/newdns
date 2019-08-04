@@ -39,7 +39,7 @@ func (r *Record) Validate(typ Type) error {
 
 	// validate CNAME and MX addresses
 	if typ == TypeCNAME || typ == TypeMX {
-		if _, ok := dns.IsDomainName(r.Address); !ok || !dns.IsFqdn(r.Address) {
+		if !IsDomain(r.Address, true) {
 			return fmt.Errorf("invalid domain address")
 		}
 	}
