@@ -49,3 +49,13 @@ func (t Type) valid() bool {
 		return false
 	}
 }
+
+func typeInList(list []Type, needle Type) bool {
+	for _, t := range list {
+		if t == needle {
+			return true
+		}
+	}
+
+	return false
+}

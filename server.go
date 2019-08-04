@@ -89,7 +89,7 @@ func (s *Server) accept(dh dns.Header) dns.MsgAcceptAction {
 	}
 
 	// check opcode
-	if int(dh.Bits>>11) & 0xF != dns.OpcodeQuery  {
+	if int(dh.Bits>>11)&0xF != dns.OpcodeQuery {
 		return dns.MsgIgnore
 	}
 
@@ -182,8 +182,17 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 		return
 	}
 
+	// check type
+	typ := Type(question.Qtype)
+
+	// return error if type is not supported
+	if !typ.valid() {
+		s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeNameError)
+		return
+	}
+
 	// lookup main record
-	result, handled := s.lookup(w, rq, rs, zone, name, question.Qtype)
+	result, handled := s.lookup(w, rq, rs, zone, name, typ)
 	if handled {
 		return
 	}
@@ -195,9 +204,9 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	for _, answer := range rs.Answer {
 		switch record := answer.(type) {
 		case *dns.MX:
-			// lookup internal MX targets
+			// lookup internal MX target A and AAAA records
 			if InZone(zone.Name, record.Mx) {
-				result, handled := s.lookup(w, rq, rs, zone, record.Mx, dns.TypeA)
+				result, handled := s.lookup(w, rq, rs, zone, record.Mx, TypeA, TypeAAAA)
 				if handled {
 					return
 				}
@@ -225,7 +234,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	s.writeMessage(w, rq, rs)
 }
 
-func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name string, needle uint16) ([]dns.RR, bool) {
+func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name string, needle ...Type) ([]dns.RR, bool) {
 	// prepare answer
 	var answer []dns.RR
 
@@ -292,7 +301,7 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 		}
 
 		// check if CNAME and query is not CNAME
-		if counters[TypeCNAME] > 0 && needle != dns.TypeCNAME {
+		if counters[TypeCNAME] > 0 && !typeInList(needle, TypeCNAME) {
 			// add CNAME set to answer
 			answer = append(answer, sets[0].convert(zone, name)...)
 
@@ -308,7 +317,7 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 
 		// add matching set
 		for _, set := range sets {
-			if uint16(set.Type) == needle {
+			if typeInList(needle, set.Type) {
 				// add records
 				answer = append(answer, set.convert(zone, name)...)
 

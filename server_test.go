@@ -167,13 +167,25 @@ func TestServer(t *testing.T) {
 				}, nil
 			}
 
-			// handle refm
-			if name == "refm" {
+			// handle ref4m
+			if name == "ref4m" {
 				return []Set{
 					{
 						Type: TypeMX,
 						Records: []Record{
 							{Address: "ip4.newdns.256dpi.com.", Priority: 7},
+						},
+					},
+				}, nil
+			}
+
+			// handle ref6m
+			if name == "ref6m" {
+				return []Set{
+					{
+						Type: TypeMX,
+						Records: []Record{
+							{Address: "ip6.newdns.256dpi.com.", Priority: 7},
 						},
 					},
 				}, nil
@@ -1446,7 +1458,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubMXWithExtraA", func(t *testing.T) {
-		ret, err := query(proto, addr, "refm.newdns.256dpi.com.", "MX", nil)
+		ret, err := query(proto, addr, "ref4m.newdns.256dpi.com.", "MX", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -1454,12 +1466,12 @@ func abstractTest(t *testing.T, proto, addr string) {
 				Authoritative: true,
 			},
 			Question: []dns.Question{
-				{Name: "refm.newdns.256dpi.com.", Qtype: dns.TypeMX, Qclass: dns.ClassINET},
+				{Name: "ref4m.newdns.256dpi.com.", Qtype: dns.TypeMX, Qclass: dns.ClassINET},
 			},
 			Answer: []dns.RR{
 				&dns.MX{
 					Hdr: dns.RR_Header{
-						Name:     "refm.newdns.256dpi.com.",
+						Name:     "ref4m.newdns.256dpi.com.",
 						Rrtype:   dns.TypeMX,
 						Class:    dns.ClassINET,
 						Ttl:      300,
@@ -1479,6 +1491,87 @@ func abstractTest(t *testing.T, proto, addr string) {
 						Rdlength: 4,
 					},
 					A: net.ParseIP("1.2.3.4"),
+				},
+			},
+			Ns: []dns.RR{
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 23,
+					},
+					Ns: awsNS[0],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 19,
+					},
+					Ns: awsNS[1],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 25,
+					},
+					Ns: awsNS[2],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 22,
+					},
+					Ns: awsNS[3],
+				},
+			},
+		}, ret)
+	})
+
+	t.Run("SubMXWithExtraAAAA", func(t *testing.T) {
+		ret, err := query(proto, addr, "ref6m.newdns.256dpi.com.", "MX", nil)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "ref6m.newdns.256dpi.com.", Qtype: dns.TypeMX, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.MX{
+					Hdr: dns.RR_Header{
+						Name:     "ref6m.newdns.256dpi.com.",
+						Rrtype:   dns.TypeMX,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 8,
+					},
+					Preference: 7,
+					Mx:         "ip6.newdns.256dpi.com.",
+				},
+			},
+			Extra: []dns.RR{
+				&dns.AAAA{
+					Hdr: dns.RR_Header{
+						Name:     "ip6.newdns.256dpi.com.",
+						Rrtype:   dns.TypeAAAA,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 16,
+					},
+					AAAA: net.ParseIP("1:2:3:4::"),
 				},
 			},
 			Ns: []dns.RR{
@@ -1756,7 +1849,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("UnsupportedType", func(t *testing.T) {
-		assertMissing(t, proto, addr, "newdns.256dpi.com.", "NULL", dns.RcodeSuccess)
+		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "NULL", dns.RcodeNameError)
 	})
 
 	t.Run("MultipleQuestions", func(t *testing.T) {
