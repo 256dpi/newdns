@@ -9,7 +9,7 @@ import (
 
 // Record holds a single DNS record.
 type Record struct {
-	// The target address for A, AAAA, CNAME, MX and NS records.
+	// The target address for A, AAAA, CNAME and MX records.
 	Address string
 
 	// The priority for MX records.
