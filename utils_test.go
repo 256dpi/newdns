@@ -41,7 +41,7 @@ func query(proto, addr, name, typ string, fn func(*dns.Msg)) (*dns.Msg, error) {
 
 	client := dns.Client{
 		Net:     proto,
-		Timeout: time.Second,
+		Timeout: 500 * time.Millisecond,
 	}
 
 	ret, _, err := client.Exchange(msg, addr)
