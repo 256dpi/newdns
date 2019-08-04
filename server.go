@@ -95,7 +95,7 @@ func (s *Server) accept(dh dns.Header) dns.MsgAcceptAction {
 
 	// check question count
 	if dh.Qdcount != 1 {
-		return dns.MsgReject
+		return dns.MsgIgnore
 	}
 
 	// check answer and authoritative records

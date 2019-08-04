@@ -1867,14 +1867,14 @@ func abstractTest(t *testing.T, proto, addr string) {
 		_, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.Opcode = dns.OpcodeNotify
 		})
-		assert.Error(t, err)
+		assert.True(t, isIOError(err), err)
 	})
 
 	t.Run("UnsupportedClass", func(t *testing.T) {
 		_, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.Question[0].Qclass = dns.ClassANY
 		})
-		assert.Error(t, err)
+		assert.True(t, isIOError(err), err)
 	})
 
 	t.Run("UnsupportedType", func(t *testing.T) {
@@ -1884,12 +1884,12 @@ func abstractTest(t *testing.T, proto, addr string) {
 	t.Run("MultipleQuestions", func(t *testing.T) {
 		_, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.Question = append(msg.Question, dns.Question{
-				Name:   "newdns.256dpi.com",
+				Name:   "newdns.256dpi.com.",
 				Qtype:  dns.TypeA,
 				Qclass: dns.ClassINET,
 			})
 		})
-		assert.Error(t, err)
+		assert.True(t, isIOError(err), err)
 	})
 
 	t.Run("NonAuthoritativeZone", func(t *testing.T) {

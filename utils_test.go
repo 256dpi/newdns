@@ -3,6 +3,7 @@ package newdns
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -68,4 +69,20 @@ func equalJSON(t *testing.T, a, b interface{}) {
 	bb := buf.String()
 
 	assert.JSONEq(t, aa, bb)
+}
+
+func isIOError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if strings.Contains(err.Error(), "i/o timeout") {
+		return true
+	}
+
+	if strings.Contains(err.Error(), "connection reset by peer") {
+		return true
+	}
+
+	return false
 }
