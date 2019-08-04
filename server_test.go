@@ -1740,6 +1740,17 @@ func abstractTest(t *testing.T, proto, addr string) {
 			},
 		}, ret)
 	})
+
+	t.Run("UnsupportedClass", func(t *testing.T) {
+		_, err := query(proto, addr, "ip4.newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+			msg.Question[0].Qclass = dns.ClassANY
+		})
+		assert.Error(t, err)
+	})
+
+	t.Run("UnsupportedType", func(t *testing.T) {
+		assertMissing(t, proto, addr, "ip4.newdns.256dpi.com.", "NULL", dns.RcodeSuccess)
+	})
 }
 
 func assertMissing(t *testing.T, proto, addr, name, typ string, code int) {

@@ -125,8 +125,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 	// check class
 	if question.Qclass != dns.ClassINET {
-		s.writeError(w, rs, dns.RcodeNotImplemented)
-		s.reportError(rq, "unsupported question class")
+		// leave connection hanging
 		return
 	}
 
