@@ -167,6 +167,36 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 		return
 	}
 
+	// lookup main record
+	result, handled := s.lookup(w, rq, rs, zone, name, question.Qtype)
+	if handled {
+		return
+	}
+
+	// set answer
+	rs.Answer = result
+
+	// add ns records
+	for _, ns := range zone.AllNameServers {
+		rs.Ns = append(rs.Ns, &dns.NS{
+			Hdr: dns.RR_Header{
+				Name:   zone.Name,
+				Rrtype: dns.TypeNS,
+				Class:  dns.ClassINET,
+				Ttl:    durationToTime(zone.NSTTL),
+			},
+			Ns: ns,
+		})
+	}
+
+	// write message
+	s.writeMessage(w, rq, rs)
+}
+
+func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name string, needle uint16) ([]dns.RR, bool) {
+	// prepare answer
+	var answer []dns.RR
+
 	// retrieve sets for zone
 	for i := 0; ; i++ {
 		// get sets
@@ -174,13 +204,13 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 		if err != nil {
 			s.writeError(w, rs, dns.RcodeServerFailure)
 			s.reportError(rq, err.Error())
-			return
+			return nil, true
 		}
 
 		// return error if initial set is empty
 		if i == 0 && len(sets) == 0 {
 			s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeNameError)
-			return
+			return nil, true
 		}
 
 		// prepare counters
@@ -199,7 +229,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 			if err != nil {
 				s.writeError(w, rs, dns.RcodeServerFailure)
 				s.reportError(rq, err.Error())
-				return
+				return nil, true
 			}
 
 			// increment counter
@@ -211,7 +241,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 			if counter > 1 {
 				s.writeError(w, rs, dns.RcodeServerFailure)
 				s.reportError(rq, "multiple sets for same type")
-				return
+				return nil, true
 			}
 		}
 
@@ -219,20 +249,20 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 		if counters[TypeCNAME] > 0 && name == zone.Name {
 			s.writeError(w, rs, dns.RcodeServerFailure)
 			s.reportError(rq, "invalid CNAME at apex")
-			return
+			return nil, true
 		}
 
 		// check CNAME is stand-alone
 		if counters[TypeCNAME] > 0 && (len(sets) > 1) {
 			s.writeError(w, rs, dns.RcodeServerFailure)
 			s.reportError(rq, "a CNAME set must be stand-alone")
-			return
+			return nil, true
 		}
 
 		// check if CNAME and query is not CNAME
-		if counters[TypeCNAME] > 0 && question.Qtype != dns.TypeCNAME {
+		if counters[TypeCNAME] > 0 && needle != dns.TypeCNAME {
 			// add CNAME set to answer
-			rs.Answer = append(rs.Answer, sets[0].convert(zone, name)...)
+			answer = append(answer, sets[0].convert(zone, name)...)
 
 			// continue with CNAME address if address is in zone
 			if InZone(zone.Name, sets[0].Records[0].Address) {
@@ -246,38 +276,24 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 		// add matching set
 		for _, set := range sets {
-			if uint16(set.Type) == question.Qtype {
+			if uint16(set.Type) == needle {
 				// add records
-				rs.Answer = append(rs.Answer, set.convert(zone, name)...)
+				answer = append(answer, set.convert(zone, name)...)
 
 				break
 			}
 		}
 
 		// write SOA with success code to indicate availability of other sets
-		if len(rs.Answer) == 0 {
+		if len(answer) == 0 {
 			s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeSuccess)
-			return
+			return nil, true
 		}
 
 		break
 	}
 
-	// add ns records
-	for _, ns := range zone.AllNameServers {
-		rs.Ns = append(rs.Ns, &dns.NS{
-			Hdr: dns.RR_Header{
-				Name:   zone.Name,
-				Rrtype: dns.TypeNS,
-				Class:  dns.ClassINET,
-				Ttl:    durationToTime(zone.NSTTL),
-			},
-			Ns: ns,
-		})
-	}
-
-	// write message
-	s.writeMessage(w, rq, rs)
+	return answer, false
 }
 
 func (s *Server) writeSOAResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone) {
