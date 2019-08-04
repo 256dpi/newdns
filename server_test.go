@@ -168,6 +168,9 @@ func TestServer(t *testing.T) {
 
 			return nil, nil
 		},
+		Reporter: func(err error) {
+			panic(err)
+		},
 	})
 
 	addr := "0.0.0.0:53001"
@@ -1038,7 +1041,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 		}, ret)
 	})
 
-	t.Run("SubCNAMEWithA", func(t *testing.T) {
+	t.Run("SubCNAMEForAWithA", func(t *testing.T) {
 		ret, err := query(proto, addr, "ref4.newdns.256dpi.com.", "A", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
@@ -1116,7 +1119,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 		}, ret)
 	})
 
-	t.Run("SubCNAMEWithAAAA", func(t *testing.T) {
+	t.Run("SubCNAMEForAAAAWithAAAA", func(t *testing.T) {
 		ret, err := query(proto, addr, "ref6.newdns.256dpi.com.", "AAAA", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
@@ -1147,6 +1150,142 @@ func abstractTest(t *testing.T, proto, addr string) {
 						Rdlength: 16,
 					},
 					AAAA: net.ParseIP("1:2:3:4::"),
+				},
+			},
+			Ns: []dns.RR{
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 23,
+					},
+					Ns: awsNS[0],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 19,
+					},
+					Ns: awsNS[1],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 25,
+					},
+					Ns: awsNS[2],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 22,
+					},
+					Ns: awsNS[3],
+				},
+			},
+		}, ret)
+	})
+
+	t.Run("SubCNAMEWithoutA", func(t *testing.T) {
+		ret, err := query(proto, addr, "ref4.newdns.256dpi.com.", "CNAME", nil)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "ref4.newdns.256dpi.com.", Qtype: dns.TypeCNAME, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:     "ref4.newdns.256dpi.com.",
+						Rrtype:   dns.TypeCNAME,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 6,
+					},
+					Target: "ip4.newdns.256dpi.com.",
+				},
+			},
+			Ns: []dns.RR{
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 23,
+					},
+					Ns: awsNS[0],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 19,
+					},
+					Ns: awsNS[1],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 25,
+					},
+					Ns: awsNS[2],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 22,
+					},
+					Ns: awsNS[3],
+				},
+			},
+		}, ret)
+	})
+
+	t.Run("SubCNAMEWithoutAAAA", func(t *testing.T) {
+		ret, err := query(proto, addr, "ref6.newdns.256dpi.com.", "CNAME", nil)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "ref6.newdns.256dpi.com.", Qtype: dns.TypeCNAME, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:     "ref6.newdns.256dpi.com.",
+						Rrtype:   dns.TypeCNAME,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 6,
+					},
+					Target: "ip6.newdns.256dpi.com.",
 				},
 			},
 			Ns: []dns.RR{

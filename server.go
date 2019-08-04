@@ -167,106 +167,100 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 		return
 	}
 
-	// get sets
-	sets, err := zone.Handler(TrimZone(zone.Name, name))
-	if err != nil {
-		s.writeError(w, rs, dns.RcodeServerFailure)
-		s.reportError(rq, err.Error())
-		return
-	}
-
-	// check sets
-	if len(sets) == 0 {
-		s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeNameError)
-		s.reportError(rq, "no sets")
-		return
-	}
-
-	// prepare flag
-	isCNAME := false
-
-	// validate sets
-	for _, set := range sets {
-		// check set
-		err = set.Validate()
+	// retrieve sets for zone
+	for i := 0; ; i++ {
+		// get sets
+		sets, err := zone.Handler(TrimZone(zone.Name, name))
 		if err != nil {
 			s.writeError(w, rs, dns.RcodeServerFailure)
 			s.reportError(rq, err.Error())
 			return
 		}
 
-		// set flag
-		if set.Type == TypeCNAME {
-			isCNAME = true
+		// return error if initial set is empty
+		if i == 0 && len(sets) == 0 {
+			s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeNameError)
+			return
 		}
-	}
 
-	// check apex CNAME
-	if isCNAME && name == zone.Name {
-		s.writeError(w, rs, dns.RcodeServerFailure)
-		s.reportError(rq, "invalid CNAME at apex")
-		return
-	}
-
-	// check CNAME is stand-alone
-	if isCNAME && (len(sets) > 0) {
-		s.writeError(w, rs, dns.RcodeServerFailure)
-		s.reportError(rq, "a CNAME set must be stand-alone")
-		return
-	}
-
-	// add matching set
-	for _, set := range sets {
-		if uint16(set.Type) == question.Qtype {
-			rs.Answer = set.convert(zone, name)
+		// prepare counters
+		counters := map[Type]int{
+			TypeA:     0,
+			TypeAAAA:  0,
+			TypeCNAME: 0,
+			TypeMX:    0,
+			TypeTXT:   0,
 		}
-	}
 
-	// return CNAME set for A and AAAA queries
-	if len(rs.Answer) == 0 && (question.Qtype == dns.TypeA || question.Qtype == dns.TypeAAAA) {
+		// validate sets
 		for _, set := range sets {
-			if set.Type == TypeCNAME {
-				rs.Answer = set.convert(zone, name)
-				break
-			}
-		}
-	}
-
-	// write SOA with success code to indicate available other sets
-	if len(rs.Answer) == 0 {
-		s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeSuccess)
-		s.reportError(rq, "no answer")
-		return
-	}
-
-	// check if answer is a CNAME that belongs to this zone
-	if cname, ok := rs.Answer[0].(*dns.CNAME); ok && InZone(zone.Name, cname.Target) {
-		println("following cname", cname.Target)
-
-		// get additional sets
-		addSets, err := zone.Handler(TrimZone(zone.Name, cname.Target))
-		if err != nil {
-			s.writeError(w, rs, dns.RcodeServerFailure)
-			s.reportError(rq, err.Error())
-			return
-		}
-
-		// validate additional sets
-		for _, set := range addSets {
+			// validate set
 			err = set.Validate()
 			if err != nil {
 				s.writeError(w, rs, dns.RcodeServerFailure)
 				s.reportError(rq, err.Error())
 				return
 			}
+
+			// increment counter
+			counters[set.Type] = counters[set.Type] + 1
 		}
 
-		// add matching A and AAAA sets
-		for _, set := range addSets {
-			if set.Type == TypeA || set.Type == TypeAAAA {
-				rs.Answer = append(rs.Answer, set.convert(zone, cname.Target)...)
+		// check counters
+		for _, counter := range counters {
+			if counter > 1 {
+				s.writeError(w, rs, dns.RcodeServerFailure)
+				s.reportError(rq, "multiple sets for same type")
+				return
 			}
 		}
+
+		// check apex CNAME
+		if counters[TypeCNAME] > 0 && name == zone.Name {
+			s.writeError(w, rs, dns.RcodeServerFailure)
+			s.reportError(rq, "invalid CNAME at apex")
+			return
+		}
+
+		// check CNAME is stand-alone
+		if counters[TypeCNAME] > 0 && (len(sets) > 1) {
+			s.writeError(w, rs, dns.RcodeServerFailure)
+			s.reportError(rq, "a CNAME set must be stand-alone")
+			return
+		}
+
+		// check if CNAME and query is not CNAME
+		if counters[TypeCNAME] > 0 && question.Qtype != dns.TypeCNAME {
+			// add CNAME set to answer
+			rs.Answer = append(rs.Answer, sets[0].convert(zone, name)...)
+
+			// continue with CNAME address if address is in zone
+			if InZone(zone.Name, sets[0].Records[0].Address) {
+				name = sets[0].Records[0].Address
+				continue
+			}
+
+			// otherwise break
+			break
+		}
+
+		// add matching set
+		for _, set := range sets {
+			if uint16(set.Type) == question.Qtype {
+				// add records
+				rs.Answer = append(rs.Answer, set.convert(zone, name)...)
+
+				break
+			}
+		}
+
+		// write SOA with success code to indicate availability of other sets
+		if len(rs.Answer) == 0 {
+			s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeSuccess)
+			return
+		}
+
+		break
 	}
 
 	// add ns records
