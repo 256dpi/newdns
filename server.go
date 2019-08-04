@@ -93,8 +93,16 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	// set flag
 	rs.Authoritative = true
 
-	// set edns
+	// check edns
 	if rq.IsEdns0() != nil {
+		// check version
+		if rq.IsEdns0().Version() != 0 {
+			s.writeError(w, rs, dns.RcodeBadVers)
+			s.reportError(rq, "invalid edns version")
+			return
+		}
+
+		// use edns in reply
 		rs.SetEdns0(uint16(s.config.BufferSize), false)
 	}
 
