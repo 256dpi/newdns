@@ -124,15 +124,14 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 	// check edns
 	if rq.IsEdns0() != nil {
+		// use edns in reply
+		rs.SetEdns0(uint16(s.config.BufferSize), false)
+
 		// check version
 		if rq.IsEdns0().Version() != 0 {
 			s.writeError(w, rs, dns.RcodeBadVers)
-			s.reportError(rq, "invalid edns version")
 			return
 		}
-
-		// use edns in reply
-		rs.SetEdns0(uint16(s.config.BufferSize), false)
 	}
 
 	// get question

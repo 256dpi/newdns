@@ -1763,6 +1763,35 @@ func abstractTest(t *testing.T, proto, addr string) {
 		}, ret)
 	})
 
+	t.Run("EDNSBadVersion", func(t *testing.T) {
+		ret, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+			msg.SetEdns0(1337, false)
+			msg.Extra[0].(*dns.OPT).SetVersion(2)
+		})
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+				Rcode:         dns.RcodeBadVers,
+			},
+			Question: []dns.Question{
+				{Name: "newdns.256dpi.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+			},
+			Extra: []dns.RR{
+				&dns.OPT{
+					Hdr: dns.RR_Header{
+						Name:     ".",
+						Rrtype:   dns.TypeOPT,
+						Class:    4096,
+						Ttl:      dns.RcodeBadVers << 20,
+						Rdlength: 0,
+					},
+				},
+			},
+		}, ret)
+	})
+
 	t.Run("RecursionDesired", func(t *testing.T) {
 		ret, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.RecursionDesired = true
