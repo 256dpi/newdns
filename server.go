@@ -281,7 +281,6 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 }
 
 func (s *Server) writeSOAResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone) {
-
 	// add soa record
 	rs.Answer = append(rs.Answer, &dns.SOA{
 		Hdr: dns.RR_Header{
