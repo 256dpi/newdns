@@ -15,7 +15,8 @@ const (
 	// CNAME records return other DNS names.
 	TypeCNAME = Type(dns.TypeCNAME)
 
-	// MX records return mails servers with their priorities.
+	// MX records return mails servers with their priorities. The target mail
+	// servers must itself be returned with an A or AAAA record.
 	TypeMX = Type(dns.TypeMX)
 
 	// TXT records return arbitrary text data.

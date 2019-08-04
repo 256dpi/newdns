@@ -17,7 +17,7 @@ type Zone struct {
 
 	// A list of FQDNs to all authoritative name servers for this zone. The
 	// FQDNs must be returned as A and AAAA records by the parent zone. It is
-	// advised to announce at least two distinct name servers per zone.
+	// required to announce at least two distinct name servers per zone.
 	AllNameServers []string
 
 	// The email address of the administrator e.g. "hostmaster@example.com".
