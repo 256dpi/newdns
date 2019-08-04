@@ -161,7 +161,7 @@ func TestServer(t *testing.T) {
 
 func abstractTest(t *testing.T, proto, addr string) {
 	t.Run("ApexA", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "A", false)
+		ret, err := query(proto, addr, "newdns.256dpi.com.", "A", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -229,7 +229,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("ApexAAAA", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "AAAA", false)
+		ret, err := query(proto, addr, "newdns.256dpi.com.", "AAAA", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -297,7 +297,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("ApexCNAME", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "CNAME", false)
+		ret, err := query(proto, addr, "newdns.256dpi.com.", "CNAME", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -330,7 +330,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("ApexSOA", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "SOA", false)
+		ret, err := query(proto, addr, "newdns.256dpi.com.", "SOA", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -404,7 +404,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("ApexNS", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "NS", false)
+		ret, err := query(proto, addr, "newdns.256dpi.com.", "NS", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -460,7 +460,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("ApexTXT", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "TXT", false)
+		ret, err := query(proto, addr, "newdns.256dpi.com.", "TXT", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -538,7 +538,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubA", func(t *testing.T) {
-		ret, err := query(proto, addr, "ip4.newdns.256dpi.com.", "A", false)
+		ret, err := query(proto, addr, "ip4.newdns.256dpi.com.", "A", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -606,7 +606,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubAAAA", func(t *testing.T) {
-		ret, err := query(proto, addr, "ip6.newdns.256dpi.com.", "AAAA", false)
+		ret, err := query(proto, addr, "ip6.newdns.256dpi.com.", "AAAA", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -674,7 +674,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubCNAME", func(t *testing.T) {
-		ret, err := query(proto, addr, "example.newdns.256dpi.com.", "CNAME", false)
+		ret, err := query(proto, addr, "example.newdns.256dpi.com.", "CNAME", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -742,7 +742,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubMX", func(t *testing.T) {
-		ret, err := query(proto, addr, "mail.newdns.256dpi.com.", "MX", false)
+		ret, err := query(proto, addr, "mail.newdns.256dpi.com.", "MX", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -811,7 +811,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubTXT", func(t *testing.T) {
-		ret, err := query(proto, addr, "text.newdns.256dpi.com.", "TXT", false)
+		ret, err := query(proto, addr, "text.newdns.256dpi.com.", "TXT", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -879,7 +879,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubCNAMEForA", func(t *testing.T) {
-		ret, err := query(proto, addr, "example.newdns.256dpi.com.", "A", false)
+		ret, err := query(proto, addr, "example.newdns.256dpi.com.", "A", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -947,7 +947,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubCNAMEForAAAA", func(t *testing.T) {
-		ret, err := query(proto, addr, "example.newdns.256dpi.com.", "AAAA", false)
+		ret, err := query(proto, addr, "example.newdns.256dpi.com.", "AAAA", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -1032,7 +1032,9 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("EDNSSuccess", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "A", true)
+		ret, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+			msg.SetEdns0(1337, false)
+		})
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -1111,7 +1113,9 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("EDNSError", func(t *testing.T) {
-		ret, err := query(proto, addr, "missing.newdns.256dpi.com.", "A", true)
+		ret, err := query(proto, addr, "missing.newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+			msg.SetEdns0(1337, false)
+		})
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -1158,7 +1162,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 func assertMissing(t *testing.T, proto, addr, name, typ string, code int) {
 	qt := dns.StringToType[typ]
 
-	ret, err := query(proto, addr, name, typ, false)
+	ret, err := query(proto, addr, name, typ, nil)
 	assert.NoError(t, err)
 	equalJSON(t, &dns.Msg{
 		MsgHdr: dns.MsgHdr{

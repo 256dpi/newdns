@@ -25,7 +25,7 @@ func run(s *Server, addr string, fn func()) {
 	fn()
 }
 
-func query(proto, addr, name, typ string, edns bool) (*dns.Msg, error) {
+func query(proto, addr, name, typ string, fn func(*dns.Msg)) (*dns.Msg, error) {
 	msg := new(dns.Msg)
 	msg.Id = dns.Id()
 	msg.Question = make([]dns.Question, 1)
@@ -35,8 +35,8 @@ func query(proto, addr, name, typ string, edns bool) (*dns.Msg, error) {
 		Qclass: dns.ClassINET,
 	}
 
-	if edns {
-		msg.SetEdns0(1337, false)
+	if fn != nil {
+		fn(msg)
 	}
 
 	client := dns.Client{Net: proto}
