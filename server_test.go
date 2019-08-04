@@ -1769,6 +1769,21 @@ func abstractTest(t *testing.T, proto, addr string) {
 		})
 		assert.Error(t, err)
 	})
+
+	t.Run("NonAuthoritativeZone", func(t *testing.T) {
+		ret, err := query(proto, addr, "foo.256dpi.com.", "A", nil)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: false,
+				Rcode:         dns.RcodeRefused,
+			},
+			Question: []dns.Question{
+				{Name: "foo.256dpi.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+			},
+		}, ret)
+	})
 }
 
 func assertMissing(t *testing.T, proto, addr, name, typ string, code int) {

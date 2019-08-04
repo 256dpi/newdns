@@ -157,7 +157,8 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 	// check zone
 	if zone == nil {
-		s.writeError(w, rs, dns.RcodeNameError)
+		rs.Authoritative = false
+		s.writeError(w, rs, dns.RcodeRefused)
 		return
 	}
 
