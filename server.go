@@ -176,6 +176,23 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	// set answer
 	rs.Answer = result
 
+	// check answers
+	for _, answer := range rs.Answer {
+		switch record := answer.(type) {
+		case *dns.MX:
+			// lookup internal MX targets
+			if InZone(zone.Name, record.Mx) {
+				result, handled := s.lookup(w, rq, rs, zone, record.Mx, dns.TypeA)
+				if handled {
+					return
+				}
+
+				// add results to extra
+				rs.Extra = append(rs.Extra, result...)
+			}
+		}
+	}
+
 	// add ns records
 	for _, ns := range zone.AllNameServers {
 		rs.Ns = append(rs.Ns, &dns.NS{
