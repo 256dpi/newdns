@@ -12,31 +12,34 @@ func TestZone(t *testing.T) {
 		err string
 	}{
 		{
-			zne: Zone{},
-			err: "name not fully qualified",
+			zne: Zone{
+				Name: "foo",
+			},
+			err: "name not fully qualified: foo",
 		},
 		{
 			zne: Zone{
-				Name: "example.com.",
+				Name:             "example.com.",
+				MasterNameServer: "foo",
 			},
-			err: "master server not full qualified",
+			err: "master server not full qualified: foo",
 		},
 		{
 			zne: Zone{
 				Name:             "example.com.",
 				MasterNameServer: "n1.example.com.",
 			},
-			err: "missing name server",
+			err: "missing name servers",
 		},
 		{
 			zne: Zone{
 				Name:             "example.com.",
 				MasterNameServer: "n1.example.com.",
 				AllNameServers: []string{
-					"",
+					"foo",
 				},
 			},
-			err: "name server not fully qualified",
+			err: "name server not fully qualified: foo",
 		},
 		{
 			zne: Zone{
@@ -56,7 +59,7 @@ func TestZone(t *testing.T) {
 				},
 				AdminEmail: "foo@bar..example.com",
 			},
-			err: "admin email cannot be converted to a domain name",
+			err: "admin email cannot be converted to a domain name: foo@bar..example.com",
 		},
 		{
 			zne: Zone{
@@ -68,7 +71,7 @@ func TestZone(t *testing.T) {
 				Refresh: 1,
 				Retry:   2,
 			},
-			err: "retry must be less than refresh",
+			err: "retry must be less than refresh: 2",
 		},
 		{
 			zne: Zone{
@@ -80,7 +83,7 @@ func TestZone(t *testing.T) {
 				Expire: 1,
 				Retry:  2,
 			},
-			err: "expire must be bigger than the sum of refresh and retry",
+			err: "expire must be bigger than the sum of refresh and retry: 1",
 		},
 	}
 

@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // Zone describes a single authoritative DNS zone.
@@ -66,23 +68,23 @@ type Zone struct {
 func (z *Zone) Validate() error {
 	// check name
 	if !IsDomain(z.Name, true) {
-		return fmt.Errorf("name not fully qualified")
+		return errors.Errorf("name not fully qualified: %s", z.Name)
 	}
 
 	// check master name server
 	if !IsDomain(z.MasterNameServer, true) {
-		return fmt.Errorf("master server not full qualified")
+		return errors.Errorf("master server not full qualified: %s", z.MasterNameServer)
 	}
 
 	// check name server count
 	if len(z.AllNameServers) < 1 {
-		return fmt.Errorf("missing name server")
+		return errors.Errorf("missing name servers")
 	}
 
 	// check name servers
 	for _, ns := range z.AllNameServers {
 		if !IsDomain(ns, true) {
-			return fmt.Errorf("name server not fully qualified")
+			return errors.Errorf("name server not fully qualified: %s", ns)
 		}
 	}
 
@@ -96,7 +98,7 @@ func (z *Zone) Validate() error {
 
 	// check admin email
 	if !IsDomain(emailToDomain(z.AdminEmail), true) {
-		return fmt.Errorf("admin email cannot be converted to a domain name")
+		return errors.Errorf("admin email cannot be converted to a domain name: %s", z.AdminEmail)
 	}
 
 	// set default refresh
@@ -131,12 +133,12 @@ func (z *Zone) Validate() error {
 
 	// check retry
 	if z.Retry >= z.Refresh {
-		return fmt.Errorf("retry must be less than refresh")
+		return errors.Errorf("retry must be less than refresh: %d", z.Retry)
 	}
 
 	// check expire
 	if z.Expire < z.Refresh+z.Retry {
-		return fmt.Errorf("expire must be bigger than the sum of refresh and retry")
+		return errors.Errorf("expire must be bigger than the sum of refresh and retry: %d", z.Expire)
 	}
 
 	return nil
@@ -188,18 +190,18 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 		// check counters
 		for _, counter := range counters {
 			if counter > 1 {
-				return nil, false, fmt.Errorf("multiple sets for same type")
+				return nil, false, errors.Errorf("multiple sets for same type")
 			}
 		}
 
 		// check apex CNAME
 		if counters[CNAME] > 0 && name == z.Name {
-			return nil, false, fmt.Errorf("invalid CNAME at apex")
+			return nil, false, errors.Errorf("invalid CNAME at apex")
 		}
 
 		// check CNAME is stand-alone
 		if counters[CNAME] > 0 && (len(sets) > 1) {
-			return nil, false, fmt.Errorf("a CNAME set must be stand-alone")
+			return nil, false, errors.Errorf("a CNAME set must be stand-alone")
 		}
 
 		// check if CNAME and query is not CNAME
