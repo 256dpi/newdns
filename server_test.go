@@ -257,10 +257,12 @@ func TestServer(t *testing.T) {
 	run(server, addr, func() {
 		t.Run("UDP", func(t *testing.T) {
 			abstractTest(t, "udp", addr)
+			customTest(t, "udp", addr)
 		})
 
 		t.Run("TCP", func(t *testing.T) {
 			abstractTest(t, "tcp", addr)
+			customTest(t, "tcp", addr)
 		})
 	})
 }
@@ -1198,6 +1200,23 @@ func abstractTest(t *testing.T, proto, addr string) {
 			},
 			Question: []dns.Question{
 				{Name: "foo.256dpi.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+			},
+		}, ret)
+	})
+}
+
+func customTest(t *testing.T, proto, addr string) {
+	t.Run("UnsupportedAny", func(t *testing.T) {
+		ret, err := query(proto, addr, "newdns.256dpi.com.", "ANY", nil)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+				Rcode:         dns.RcodeNotImplemented,
+			},
+			Question: []dns.Question{
+				{Name: "newdns.256dpi.com.", Qtype: dns.TypeANY, Qclass: dns.ClassINET},
 			},
 		}, ret)
 	})

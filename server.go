@@ -133,6 +133,12 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 		return
 	}
 
+	// check any type
+	if question.Qtype == dns.TypeANY {
+		s.writeError(w, rs, dns.RcodeNotImplemented)
+		return
+	}
+
 	// get name
 	name := strings.ToLower(dns.Name(question.Name).String())
 
