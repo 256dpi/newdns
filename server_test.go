@@ -1,6 +1,7 @@
 package newdns
 
 import (
+	"fmt"
 	"net"
 	"testing"
 	"time"
@@ -290,8 +291,8 @@ func TestServer(t *testing.T) {
 
 			return nil, nil
 		},
-		Reporter: func(err error) {
-			panic(err)
+		Logger: func(e Event, msg *dns.Msg, err error, reason string) {
+			fmt.Println(e, err, reason)
 		},
 	})
 

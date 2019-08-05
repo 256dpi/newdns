@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/miekg/dns"
+
 	"github.com/256dpi/newdns"
 )
 
@@ -52,8 +54,11 @@ func main() {
 
 			return nil, nil
 		},
-		Reporter: func(err error) {
-			println(err.Error())
+		Logger: func(e newdns.Event, msg *dns.Msg, err error, reason string) {
+			fmt.Println(e, err, reason)
+			if msg != nil {
+				fmt.Println(msg)
+			}
 		},
 	})
 

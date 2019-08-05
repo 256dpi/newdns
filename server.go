@@ -8,6 +8,61 @@ import (
 	"github.com/miekg/dns"
 )
 
+// Event denotes an event type emitted to the logger.
+type Event int
+
+const (
+	// Ignored are requests that haven been dropped by leaving the connection
+	// hanging to mitigate attacks. Inspect the reason for more information.
+	Ignored Event = iota
+
+	// Request is emitted for every accepted request. For every request event
+	// a finish event fill follow. You can inspect the message to see the
+	// complete request sent by the client.
+	Request Event = iota
+
+	// Refused are requests that received an error due to some incompatibility.
+	// Inspect the reason for more information.
+	Refused Event = iota
+
+	// BackendError is emitted with errors returned by the callback and
+	// validation functions. Inspect the error for more information.
+	BackendError Event = iota
+
+	// NetworkError is emitted with errors returned by the connection. Inspect
+	// the error for more information.
+	NetworkError Event = iota
+
+	// Response is emitted with the final response to the client. You can inspect
+	// the message to see the complete response to the client.
+	Response Event = iota
+
+	// Finish is emitted when a request has been processed.
+	Finish Event = iota
+)
+
+// String will return the name of the event.
+func (e Event) String() string {
+	switch e {
+	case Ignored:
+		return "Ignored"
+	case Request:
+		return "Request"
+	case Refused:
+		return "Refused"
+	case BackendError:
+		return "BackendError"
+	case NetworkError:
+		return "NetworkError"
+	case Response:
+		return "Response"
+	case Finish:
+		return "Finish"
+	default:
+		return "Unknown"
+	}
+}
+
 // Config provides configuration for a DNS server.
 type Config struct {
 	// The buffer size used if EDNS is enabled by a client.
@@ -19,7 +74,7 @@ type Config struct {
 	Handler func(name string) (*Zone, error)
 
 	// Reporter is the callback called with request errors.
-	Reporter func(error)
+	Logger func(e Event, msg *dns.Msg, err error, reason string)
 }
 
 // Server is a DNS server.
@@ -84,18 +139,21 @@ func (s *Server) Close() {
 }
 
 func (s *Server) accept(dh dns.Header) dns.MsgAcceptAction {
-	// check if query
+	// check if request
 	if dh.Bits&(1<<15) != 0 {
+		s.log(Ignored, nil, nil, "not a request")
 		return dns.MsgIgnore
 	}
 
 	// check opcode
 	if int(dh.Bits>>11)&0xF != dns.OpcodeQuery {
+		s.log(Ignored, nil, nil, "not a query")
 		return dns.MsgIgnore
 	}
 
 	// check question count
 	if dh.Qdcount != 1 {
+		s.log(Ignored, nil, nil, "invalid question count: %d", dh.Qdcount)
 		return dns.MsgIgnore
 	}
 
@@ -103,6 +161,19 @@ func (s *Server) accept(dh dns.Header) dns.MsgAcceptAction {
 }
 
 func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
+	// get question
+	question := rq.Question[0]
+
+	// check class
+	if question.Qclass != dns.ClassINET {
+		s.log(Ignored, nil, nil, "unsupported class: %s", dns.ClassToString[question.Qclass])
+		return
+	}
+
+	// log request and finish
+	s.log(Request, rq, nil, "")
+	defer s.log(Finish, nil, nil, "")
+
 	// prepare response
 	rs := new(dns.Msg)
 	rs.SetReply(rq)
@@ -120,22 +191,15 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 		// check version
 		if rq.IsEdns0().Version() != 0 {
+			s.log(Refused, nil, nil, "unsupported EDNS version: %d", rq.IsEdns0().Version())
 			s.writeError(w, rq, rs, nil, dns.RcodeBadVers)
 			return
 		}
 	}
 
-	// get question
-	question := rq.Question[0]
-
-	// check class
-	if question.Qclass != dns.ClassINET {
-		// leave connection hanging
-		return
-	}
-
 	// check any type
 	if question.Qtype == dns.TypeANY {
+		s.log(Refused, nil, nil, "unsupported type: ANY")
 		s.writeError(w, rq, rs, nil, dns.RcodeNotImplemented)
 		return
 	}
@@ -146,13 +210,14 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	// get zone
 	zone, err := s.config.Handler(name)
 	if err != nil {
+		s.log(BackendError, nil, err, "")
 		s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
-		s.reportError(rq, err.Error())
 		return
 	}
 
 	// check zone
 	if zone == nil {
+		s.log(Refused, nil, nil, "no zone")
 		rs.Authoritative = false
 		s.writeError(w, rq, rs, nil, dns.RcodeRefused)
 		return
@@ -161,8 +226,8 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	// validate zone
 	err = zone.Validate()
 	if err != nil {
+		s.log(BackendError, nil, err, "")
 		s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
-		s.reportError(rq, err.Error())
 		return
 	}
 
@@ -183,6 +248,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 	// return error if type is not supported
 	if !typ.valid() {
+		s.log(Refused, nil, nil, "unsupported type: "+dns.TypeToString[question.Qtype])
 		s.writeError(w, rq, rs, zone, dns.RcodeNameError)
 		return
 	}
@@ -190,8 +256,8 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	// lookup main result
 	result, exists, err := zone.Lookup(name, typ)
 	if err != nil {
+		s.log(BackendError, nil, err, "")
 		s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
-		s.reportError(rq, err.Error())
 		return
 	}
 
@@ -222,8 +288,8 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 			if InZone(zone.Name, record.Mx) {
 				result, _, err = zone.Lookup(record.Mx, A, AAAA)
 				if err != nil {
+					s.log(BackendError, nil, err, "")
 					s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
-					s.reportError(rq, err.Error())
 					return
 				}
 
@@ -351,21 +417,25 @@ func (s *Server) writeMessage(w dns.ResponseWriter, rq, rs *dns.Msg) {
 		rs.Rcode = dns.RcodeSuccess
 		_ = w.WriteMsg(rs)
 		_ = w.Close()
+		s.log(Response, rs, nil, "")
 		return
 	}
 
 	// write message
 	err := w.WriteMsg(rs)
 	if err != nil {
+		s.log(NetworkError, nil, err, "")
 		_ = w.Close()
-		s.reportError(rq, err.Error())
 		return
 	}
+
+	// log response
+	s.log(Response, rs, nil, "")
 }
 
-func (s *Server) reportError(r *dns.Msg, msg string) {
-	if s.config.Reporter != nil {
-		s.config.Reporter(fmt.Errorf("%s: %+v", msg, r))
+func (s *Server) log(e Event, msg *dns.Msg, err error, reason string, args ...interface{}) {
+	if s.config.Logger != nil {
+		s.config.Logger(e, msg, err, fmt.Sprintf(reason, args...))
 	}
 }
 
