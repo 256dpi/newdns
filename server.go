@@ -410,17 +410,13 @@ func (s *Server) writeMessage(w dns.ResponseWriter, rq, rs *dns.Msg) {
 	// determine if client is using UDP
 	isUDP := w.RemoteAddr().Network() == "udp"
 
-	// return truncated message if client is using UDP and message is too long
+	// truncate message if client is using UDP and message is too long
 	if isUDP && rs.Len() > buffer {
 		rs.Truncated = true
 		rs.Answer = nil
 		rs.Ns = nil
 		rs.Extra = nil
 		rs.Rcode = dns.RcodeSuccess
-		_ = w.WriteMsg(rs)
-		_ = w.Close()
-		s.log(Response, rs, nil, "")
-		return
 	}
 
 	// write message
