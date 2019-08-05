@@ -23,24 +23,6 @@ const (
 	TypeTXT = Type(dns.TypeTXT)
 )
 
-// Strings returns the name of the type.
-func (t Type) String() string {
-	switch t {
-	case TypeA:
-		return "A"
-	case TypeAAAA:
-		return "AAAA"
-	case TypeCNAME:
-		return "CNAME"
-	case TypeMX:
-		return "MX"
-	case TypeTXT:
-		return "TXT"
-	default:
-		return ""
-	}
-}
-
 func (t Type) valid() bool {
 	switch t {
 	case TypeA, TypeAAAA, TypeCNAME, TypeMX, TypeTXT:
