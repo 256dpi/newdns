@@ -411,6 +411,25 @@ func (s *Server) writeErrorWithSOA(w dns.ResponseWriter, rq, rs *dns.Msg, zone *
 }
 
 func (s *Server) writeMessage(w dns.ResponseWriter, rq, rs *dns.Msg) {
+	// get buffer size
+	var buffer = 512
+	if rq.IsEdns0() != nil {
+		buffer = int(rq.IsEdns0().UDPSize())
+	}
+
+	// determine if client is using UDP
+	isUDP := w.RemoteAddr().Network() == "udp"
+
+	// return truncated message if client is using UDP and message is too long
+	if isUDP && rs.Len() > buffer {
+		rs.Truncated = true
+		rs.Answer = nil
+		rs.Ns = nil
+		rs.Extra = nil
+		s.writeError(w, rs, dns.RcodeSuccess)
+		return
+	}
+
 	err := w.WriteMsg(rs)
 	if err != nil {
 		_ = w.Close()

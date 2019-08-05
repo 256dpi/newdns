@@ -234,6 +234,20 @@ func TestServer(t *testing.T) {
 				}, nil
 			}
 
+			// handle long
+			if name == "long" {
+				return []Set{
+					{
+						Type: TypeTXT,
+						Records: []Record{
+							{Data: []string{"z4e6ycRMp6MP3WvWQMxIAOXglxANbj3oB0xD8BffktO4eo3VCR0s6TyGHKixvarOFJU0fqNkXeFOeI7sTXH5X0iXZukfLgnGTxLXNC7KkVFwtVFsh1P0IUNXtNBlOVWrVbxkS62ezbLpENNkiBwbkCvcTjwF2kyI0curAt9JhhJFb3AAq0q1iHWlJLn1KSrev9PIsY3alndDKjYTPxAojxzGKdK3A7rWLJ8Uzb3Z5OhLwP7jTKqbWVUocJRFLYp"}},
+							{Data: []string{"gyK4oL9X8Zn3b6TwmUIYAgQx43rBOWMqJWR3wGMGNaZgajnhd2u9JaIbGwNo6gzZunyKYRxID3mKLmYUCcIrNYuo8R4UkijZeshwqEAM2EWnjNsB1hJHOlu6VyRKW13rsFUJedOSqc7YjjUoxm9c3mF28tEXmc3GVsC476wJ2ciSbp7ujDjQ032SQRD6kpayzFX8GncS5KXP8mLK2ZIqK2U4fUmYEpTPQMmp7w24GKkfGJzE4JfMBxSybDUScLq"}},
+							{Data: []string{"upNh05zi9flqN2puI9eIGgAgl3gwc65l3WjFdnE3u55dhyUyIoKbOlc1mQJPULPkn1V5TTG9rLBB8AzNfeL8jvwO8h0mzmJhPH8n6dkgI546jB8Z0g0MRJxN5VNSixjFjdR8vtUp6EWlVi7QSe9SYInghV0M17zZ8mXSHwTfYZaPH54ng22mSWzVbRX2tlUPLTNRB5CHrEtxliyhhQlRey98P5G0eo35FUXdqzOSJ3HGqDssBWQAxK3I9feOjbE"}},
+						},
+					},
+				}, nil
+			}
+
 			return nil, nil
 		},
 	}
@@ -941,6 +955,73 @@ func conformanceTests(t *testing.T, proto, addr string) {
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "CNAME", dns.RcodeNameError)
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "MX", dns.RcodeNameError)
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "TXT", dns.RcodeNameError)
+	})
+
+	t.Run("TruncatedResponse", func(t *testing.T) {
+		ret, err := query(proto, addr, "long.newdns.256dpi.com.", "TXT", nil)
+		assert.NoError(t, err)
+
+		if proto == "udp" {
+			equalJSON(t, &dns.Msg{
+				MsgHdr: dns.MsgHdr{
+					Response:      true,
+					Authoritative: true,
+					Truncated:     true,
+				},
+				Question: []dns.Question{
+					{Name: "long.newdns.256dpi.com.", Qtype: dns.TypeTXT, Qclass: dns.ClassINET},
+				},
+			}, ret)
+		} else {
+			equalJSON(t, &dns.Msg{
+				MsgHdr: dns.MsgHdr{
+					Response:      true,
+					Authoritative: true,
+				},
+				Question: []dns.Question{
+					{Name: "long.newdns.256dpi.com.", Qtype: dns.TypeTXT, Qclass: dns.ClassINET},
+				},
+				Answer: []dns.RR{
+					&dns.TXT{
+						Hdr: dns.RR_Header{
+							Name:     "long.newdns.256dpi.com.",
+							Rrtype:   dns.TypeTXT,
+							Class:    dns.ClassINET,
+							Ttl:      300,
+							Rdlength: 256,
+						},
+						Txt: []string{
+							"gyK4oL9X8Zn3b6TwmUIYAgQx43rBOWMqJWR3wGMGNaZgajnhd2u9JaIbGwNo6gzZunyKYRxID3mKLmYUCcIrNYuo8R4UkijZeshwqEAM2EWnjNsB1hJHOlu6VyRKW13rsFUJedOSqc7YjjUoxm9c3mF28tEXmc3GVsC476wJ2ciSbp7ujDjQ032SQRD6kpayzFX8GncS5KXP8mLK2ZIqK2U4fUmYEpTPQMmp7w24GKkfGJzE4JfMBxSybDUScLq",
+						},
+					},
+					&dns.TXT{
+						Hdr: dns.RR_Header{
+							Name:     "long.newdns.256dpi.com.",
+							Rrtype:   dns.TypeTXT,
+							Class:    dns.ClassINET,
+							Ttl:      300,
+							Rdlength: 256,
+						},
+						Txt: []string{
+							"upNh05zi9flqN2puI9eIGgAgl3gwc65l3WjFdnE3u55dhyUyIoKbOlc1mQJPULPkn1V5TTG9rLBB8AzNfeL8jvwO8h0mzmJhPH8n6dkgI546jB8Z0g0MRJxN5VNSixjFjdR8vtUp6EWlVi7QSe9SYInghV0M17zZ8mXSHwTfYZaPH54ng22mSWzVbRX2tlUPLTNRB5CHrEtxliyhhQlRey98P5G0eo35FUXdqzOSJ3HGqDssBWQAxK3I9feOjbE",
+						},
+					},
+					&dns.TXT{
+						Hdr: dns.RR_Header{
+							Name:     "long.newdns.256dpi.com.",
+							Rrtype:   dns.TypeTXT,
+							Class:    dns.ClassINET,
+							Ttl:      300,
+							Rdlength: 256,
+						},
+						Txt: []string{
+							"z4e6ycRMp6MP3WvWQMxIAOXglxANbj3oB0xD8BffktO4eo3VCR0s6TyGHKixvarOFJU0fqNkXeFOeI7sTXH5X0iXZukfLgnGTxLXNC7KkVFwtVFsh1P0IUNXtNBlOVWrVbxkS62ezbLpENNkiBwbkCvcTjwF2kyI0curAt9JhhJFb3AAq0q1iHWlJLn1KSrev9PIsY3alndDKjYTPxAojxzGKdK3A7rWLJ8Uzb3Z5OhLwP7jTKqbWVUocJRFLYp",
+						},
+					},
+				},
+				Ns: nsRRs,
+			}, ret)
+		}
 	})
 
 	t.Run("EDNSSuccess", func(t *testing.T) {
