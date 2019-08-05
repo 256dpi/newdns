@@ -1,7 +1,6 @@
 package newdns
 
 import (
-	"fmt"
 	"net"
 
 	"github.com/pkg/errors"
@@ -58,17 +57,4 @@ func (r *Record) Validate(typ Type) error {
 	}
 
 	return nil
-}
-
-func (r *Record) sortKey(typ Type) string {
-	switch typ {
-	case A, AAAA, CNAME:
-		return r.Address
-	case MX:
-		return fmt.Sprintf("%020d %s", r.Priority, r.Address)
-	case TXT:
-		return r.Data[0]
-	default:
-		return ""
-	}
 }
