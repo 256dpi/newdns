@@ -82,10 +82,20 @@ func (z *Zone) Validate() error {
 	}
 
 	// check name servers
+	var includesMaster bool
 	for _, ns := range z.AllNameServers {
 		if !IsDomain(ns, true) {
 			return errors.Errorf("name server not fully qualified: %s", ns)
 		}
+
+		if ns == z.MasterNameServer {
+			includesMaster = true
+		}
+	}
+
+	// check master inclusion
+	if !includesMaster {
+		return errors.Errorf("master name server not listed as name server: %s", z.MasterNameServer)
 	}
 
 	// sort name servers

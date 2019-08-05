@@ -45,6 +45,16 @@ func TestZoneValidate(t *testing.T) {
 		{
 			zne: Zone{
 				Name:             "example.com.",
+				MasterNameServer: "n2.example.com.",
+				AllNameServers: []string{
+					"n1.example.com.",
+				},
+			},
+			err: "master name server not listed as name server: n2.example.com.",
+		},
+		{
+			zne: Zone{
+				Name:             "example.com.",
 				MasterNameServer: "n1.example.com.",
 				AllNameServers: []string{
 					"n1.example.com.",
