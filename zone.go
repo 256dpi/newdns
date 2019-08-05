@@ -3,8 +3,18 @@ package newdns
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 )
+
+// Results are returned when a name is looked up in a zone.
+type Result struct {
+	// The name of the set.
+	Name string
+
+	// The returned set.
+	Set Set
+}
 
 // Zone describes a single authoritative DNS zone.
 type Zone struct {
@@ -139,6 +149,109 @@ func (z *Zone) Validate() error {
 	}
 
 	return nil
+}
+
+// Lookup will lookup the specified name in the zone and return results for the
+// specified record types. If no results are returned, the second return value
+// indicates if there are other results for the specified name.
+func (z *Zone) Lookup(name string, needle ...Type) ([]Result, bool, error) {
+	// enforce lowercase name
+	name = strings.ToLower(name)
+
+	// prepare result
+	var result []Result
+
+	for i := 0; ; i++ {
+		// get sets
+		sets, err := z.Handler(TrimZone(z.Name, name))
+		if err != nil {
+			return nil, false, err
+		}
+
+		// return immediately if initial set is empty
+		if i == 0 && len(sets) == 0 {
+			return nil, false, nil
+		}
+
+		// prepare counters
+		counters := map[Type]int{
+			TypeA:     0,
+			TypeAAAA:  0,
+			TypeCNAME: 0,
+			TypeMX:    0,
+			TypeTXT:   0,
+		}
+
+		// validate sets
+		for _, set := range sets {
+			// validate set
+			err = set.Validate()
+			if err != nil {
+				return nil, false, err
+			}
+
+			// increment counter
+			counters[set.Type] = counters[set.Type] + 1
+		}
+
+		// check counters
+		for _, counter := range counters {
+			if counter > 1 {
+				return nil, false, fmt.Errorf("multiple sets for same type")
+			}
+		}
+
+		// check apex CNAME
+		if counters[TypeCNAME] > 0 && name == z.Name {
+			return nil, false, fmt.Errorf("invalid CNAME at apex")
+		}
+
+		// check CNAME is stand-alone
+		if counters[TypeCNAME] > 0 && (len(sets) > 1) {
+			return nil, false, fmt.Errorf("a CNAME set must be stand-alone")
+		}
+
+		// check if CNAME and query is not CNAME
+		if counters[TypeCNAME] > 0 && !typeInList(needle, TypeCNAME) {
+			// add CNAME set to result
+			result = append(result, Result{
+				Name: name,
+				Set:  sets[0],
+			})
+
+			// get normalized address
+			address := strings.ToLower(sets[0].Records[0].Address)
+
+			// continue lookup with CNAME address if address is in zone
+			if InZone(z.Name, address) {
+				name = address
+				continue
+			}
+
+			return result, false, nil
+		}
+
+		// add matching set
+		for _, set := range sets {
+			if typeInList(needle, set.Type) {
+				// add records
+				result = append(result, Result{
+					Name: name,
+					Set:  set,
+				})
+
+				break
+			}
+		}
+
+		// return if there are not matches, but indicate that there are sets
+		// available for other types
+		if len(result) == 0 {
+			return nil, true, nil
+		}
+
+		return result, false, nil
+	}
 }
 
 func (z *Zone) minTTL(ttl time.Duration) time.Duration {

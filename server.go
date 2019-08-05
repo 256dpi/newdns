@@ -7,11 +7,6 @@ import (
 	"github.com/miekg/dns"
 )
 
-type result struct {
-	name string
-	set  Set
-}
-
 // Config provides configuration for a DNS server.
 type Config struct {
 	// The buffer size used if EDNS is enabled by a client.
@@ -192,7 +187,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	}
 
 	// lookup main record
-	result, avl, err := s.lookup(zone, name, typ)
+	result, avl, err := zone.Lookup(name, typ)
 	if err != nil {
 		s.writeError(w, rs, dns.RcodeServerFailure)
 		s.reportError(rq, err.Error())
@@ -216,7 +211,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 	// set answer
 	for _, res := range result {
-		rs.Answer = append(rs.Answer, res.set.convert(zone, transferCase(question.Name, res.name))...)
+		rs.Answer = append(rs.Answer, res.Set.convert(zone, transferCase(question.Name, res.Name))...)
 	}
 
 	// check answers
@@ -225,7 +220,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 		case *dns.MX:
 			// lookup internal MX target A and AAAA records
 			if InZone(zone.Name, record.Mx) {
-				result, _, err = s.lookup(zone, record.Mx, TypeA, TypeAAAA)
+				result, _, err = zone.Lookup(record.Mx, TypeA, TypeAAAA)
 				if err != nil {
 					s.writeError(w, rs, dns.RcodeServerFailure)
 					s.reportError(rq, err.Error())
@@ -234,7 +229,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 				// add results to extra
 				for _, res := range result {
-					rs.Extra = append(rs.Extra, res.set.convert(zone, transferCase(question.Name, res.name))...)
+					rs.Extra = append(rs.Extra, res.Set.convert(zone, transferCase(question.Name, res.Name))...)
 				}
 			}
 		}
@@ -255,101 +250,6 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 	// write message
 	s.writeMessage(w, rq, rs)
-}
-
-func (s *Server) lookup(zone *Zone, name string, needle ...Type) ([]result, bool, error) {
-	// prepare result
-	var res []result
-
-	// retrieve sets for zone
-	for i := 0; ; i++ {
-		// get sets
-		sets, err := zone.Handler(TrimZone(zone.Name, name))
-		if err != nil {
-			return nil, false, err
-		}
-
-		// return if initial set is empty
-		if i == 0 && len(sets) == 0 {
-			return nil, false, nil
-		}
-
-		// prepare counters
-		counters := map[Type]int{
-			TypeA:     0,
-			TypeAAAA:  0,
-			TypeCNAME: 0,
-			TypeMX:    0,
-			TypeTXT:   0,
-		}
-
-		// validate sets
-		for _, set := range sets {
-			// validate set
-			err = set.Validate()
-			if err != nil {
-				return nil, false, err
-			}
-
-			// increment counter
-			counters[set.Type] = counters[set.Type] + 1
-		}
-
-		// check counters
-		for _, counter := range counters {
-			if counter > 1 {
-				return nil, false, fmt.Errorf("multiple sets for same type")
-			}
-		}
-
-		// check apex CNAME
-		if counters[TypeCNAME] > 0 && name == zone.Name {
-			return nil, false, fmt.Errorf("invalid CNAME at apex")
-		}
-
-		// check CNAME is stand-alone
-		if counters[TypeCNAME] > 0 && (len(sets) > 1) {
-			return nil, false, fmt.Errorf("a CNAME set must be stand-alone")
-		}
-
-		// check if CNAME and query is not CNAME
-		if counters[TypeCNAME] > 0 && !typeInList(needle, TypeCNAME) {
-			// add CNAME set to result
-			res = append(res, result{
-				name: name,
-				set:  sets[0],
-			})
-
-			// continue with CNAME address if address is in zone
-			if InZone(zone.Name, sets[0].Records[0].Address) {
-				name = sets[0].Records[0].Address
-				continue
-			}
-
-			return res, false, nil
-		}
-
-		// add matching set
-		for _, set := range sets {
-			if typeInList(needle, set.Type) {
-				// add records
-				res = append(res, result{
-					name: name,
-					set:  set,
-				})
-
-				break
-			}
-		}
-
-		// return if there are not matches, but indicate that there are sets
-		// available for other types
-		if len(res) == 0 {
-			return nil, true, nil
-		}
-
-		return res, false, nil
-	}
 }
 
 func (s *Server) writeSOAResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone) {
