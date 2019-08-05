@@ -1050,7 +1050,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 			Ns: []dns.RR{
 				&dns.NS{
 					Hdr: dns.RR_Header{
-						Name:     "NEWDNS.256dpi.com.",
+						Name:     "NeWDnS.256dpi.com.",
 						Rrtype:   dns.TypeNS,
 						Class:    dns.ClassINET,
 						Ttl:      172800,
@@ -1060,7 +1060,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 				},
 				&dns.NS{
 					Hdr: dns.RR_Header{
-						Name:     "NEWDNS.256dpi.com.",
+						Name:     "NeWDnS.256dpi.com.",
 						Rrtype:   dns.TypeNS,
 						Class:    dns.ClassINET,
 						Ttl:      172800,
@@ -1070,7 +1070,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 				},
 				&dns.NS{
 					Hdr: dns.RR_Header{
-						Name:     "NEWDNS.256dpi.com.",
+						Name:     "NeWDnS.256dpi.com.",
 						Rrtype:   dns.TypeNS,
 						Class:    dns.ClassINET,
 						Ttl:      172800,
@@ -1080,7 +1080,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 				},
 				&dns.NS{
 					Hdr: dns.RR_Header{
-						Name:     "NEWDNS.256dpi.com.",
+						Name:     "NeWDnS.256dpi.com.",
 						Rrtype:   dns.TypeNS,
 						Class:    dns.ClassINET,
 						Ttl:      172800,
