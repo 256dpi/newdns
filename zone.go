@@ -182,7 +182,7 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 			}
 
 			// increment counter
-			counters[set.Type] = counters[set.Type] + 1
+			counters[set.Type]++
 		}
 
 		// check counters
