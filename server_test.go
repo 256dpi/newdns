@@ -18,6 +18,49 @@ var awsNS = []string{
 
 const awsPrimaryNS = "ns-140.awsdns-17.com."
 
+var nsRRs = []dns.RR{
+	&dns.NS{
+		Hdr: dns.RR_Header{
+			Name:     "newdns.256dpi.com.",
+			Rrtype:   dns.TypeNS,
+			Class:    dns.ClassINET,
+			Ttl:      172800,
+			Rdlength: 23,
+		},
+		Ns: awsNS[0],
+	},
+	&dns.NS{
+		Hdr: dns.RR_Header{
+			Name:     "newdns.256dpi.com.",
+			Rrtype:   dns.TypeNS,
+			Class:    dns.ClassINET,
+			Ttl:      172800,
+			Rdlength: 19,
+		},
+		Ns: awsNS[1],
+	},
+	&dns.NS{
+		Hdr: dns.RR_Header{
+			Name:     "newdns.256dpi.com.",
+			Rrtype:   dns.TypeNS,
+			Class:    dns.ClassINET,
+			Ttl:      172800,
+			Rdlength: 25,
+		},
+		Ns: awsNS[2],
+	},
+	&dns.NS{
+		Hdr: dns.RR_Header{
+			Name:     "newdns.256dpi.com.",
+			Rrtype:   dns.TypeNS,
+			Class:    dns.ClassINET,
+			Ttl:      172800,
+			Rdlength: 22,
+		},
+		Ns: awsNS[3],
+	},
+}
+
 func TestAWS(t *testing.T) {
 	t.Run("UDP", func(t *testing.T) {
 		abstractTest(t, "udp", awsPrimaryNS+":53")
@@ -246,48 +289,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					A: net.ParseIP("1.2.3.4"),
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -314,48 +316,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					AAAA: net.ParseIP("1:2:3:4::"),
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -421,48 +382,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					Minttl:  300,
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 2,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -477,48 +397,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 			Question: []dns.Question{
 				{Name: "newdns.256dpi.com.", Qtype: dns.TypeNS, Qclass: dns.ClassINET},
 			},
-			Answer: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Answer: nsRRs,
 		}, ret)
 	})
 
@@ -555,48 +434,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					Txt: []string{"foo", "bar"},
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -623,48 +461,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					A: net.ParseIP("1.2.3.4"),
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -691,48 +488,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					AAAA: net.ParseIP("1:2:3:4::"),
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -759,48 +515,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					Target: "example.com.",
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -828,48 +543,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					Preference: 7,
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -896,48 +570,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					Txt: []string{"foo", "bar"},
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -964,48 +597,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					Target: "example.com.",
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -1032,48 +624,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					Target: "example.com.",
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -1110,48 +661,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					A: net.ParseIP("1.2.3.4"),
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -1188,48 +698,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					AAAA: net.ParseIP("1:2:3:4::"),
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -1256,48 +725,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					Target: "ip4.newdns.256dpi.com.",
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -1324,48 +752,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					Target: "ip6.newdns.256dpi.com.",
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -1412,48 +799,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					A: net.ParseIP("1.2.3.4"),
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -1493,48 +839,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					A: net.ParseIP("1.2.3.4"),
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -1574,48 +879,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					AAAA: net.ParseIP("1:2:3:4::"),
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
@@ -1661,48 +925,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					A: net.ParseIP("1.2.3.4"),
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 			Extra: []dns.RR{
 				&dns.OPT{
 					Hdr: dns.RR_Header{
@@ -1818,48 +1041,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 					A: net.ParseIP("1.2.3.4"),
 				},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 23,
-					},
-					Ns: awsNS[0],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 19,
-					},
-					Ns: awsNS[1],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 25,
-					},
-					Ns: awsNS[2],
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      172800,
-						Rdlength: 22,
-					},
-					Ns: awsNS[3],
-				},
-			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
