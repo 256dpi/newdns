@@ -11,28 +11,42 @@ import (
 func main() {
 	// create zone
 	zone := &newdns.Zone{
-		Name:             "foo.example.com.",
-		MasterNameServer: "ns1.example.com.",
+		Name:             "example.com.",
+		MasterNameServer: "ns1.hostmaster.com.",
 		AllNameServers: []string{
-			"ns2.example.com.",
-			"ns3.example.com.",
+			"ns1.hostmaster.com.",
+			"ns2.hostmaster.com.",
+			"ns3.hostmaster.com.",
 		},
 		Handler: func(name string) ([]newdns.Set, error) {
-			fmt.Printf("lookup name: \"%s\"\n", name)
-
 			// return apex records
 			if name == "" {
 				return []newdns.Set{
 					{
+						Name: "example.com.",
 						Type: newdns.A,
 						Records: []newdns.Record{
 							{Address: "1.2.3.4"},
 						},
 					},
 					{
+						Name: "example.com.",
 						Type: newdns.AAAA,
 						Records: []newdns.Record{
 							{Address: "1:2:3:4::"},
+						},
+					},
+				}, nil
+			}
+
+			// return sub records
+			if name == "foo" {
+				return []newdns.Set{
+					{
+						Name: "foo.example.com.",
+						Type: newdns.CNAME,
+						Records: []newdns.Record{
+							{Address: "bar.example.com."},
 						},
 					},
 				}, nil
@@ -45,10 +59,8 @@ func main() {
 	// create server
 	server := newdns.NewServer(newdns.Config{
 		Handler: func(name string) (*newdns.Zone, error) {
-			fmt.Printf("lookup zone: %s\n", name)
-
 			// check name
-			if newdns.InZone("foo.example.com.", name) {
+			if newdns.InZone("example.com.", name) {
 				return zone, nil
 			}
 
@@ -56,9 +68,6 @@ func main() {
 		},
 		Logger: func(e newdns.Event, msg *dns.Msg, err error, reason string) {
 			fmt.Println(e, err, reason)
-			if msg != nil {
-				fmt.Println(msg)
-			}
 		},
 	})
 
@@ -71,7 +80,8 @@ func main() {
 	}()
 
 	// print info
-	fmt.Println("USE dig foo.example.com @0.0.0.0 -p 1337")
+	fmt.Println("Query apex: dig example.com @0.0.0.0 -p 1337")
+	fmt.Println("Query other: dig foo.example.com @0.0.0.0 -p 1337")
 
 	// wait forever
 	select {}
