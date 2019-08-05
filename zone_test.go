@@ -150,38 +150,44 @@ func TestZoneLookup(t *testing.T) {
 	err := zone.Validate()
 	assert.NoError(t, err)
 
-	res, exists, err := zone.Lookup("foo", A)
-	assert.Equal(t, "name does not belong to zone: foo", err.Error())
-	assert.False(t, exists)
-	assert.Nil(t, res)
+	table := []struct {
+		name string
+		err  string
+	}{
+		{
+			name: "foo",
+			err:  "name does not belong to zone: foo",
+		},
+		{
+			name: "error.example.com.",
+			err:  "zone handler error: EOF",
+		},
+		{
+			name: "invalid1.example.com.",
+			err:  "invalid set: invalid name: foo",
+		},
+		{
+			name: "invalid2.example.com.",
+			err:  "set does not belong to zone: foo.",
+		},
+		{
+			name: "multiple.example.com.",
+			err:  "multiple sets for same type",
+		},
+		{
+			name: "example.com.",
+			err:  "invalid CNAME set at apex: example.com.",
+		},
+		{
+			name: "cname.example.com.",
+			err:  "other sets with CNAME set: cname.example.com.",
+		},
+	}
 
-	res, exists, err = zone.Lookup("error.example.com.", A)
-	assert.Equal(t, "zone handler error: EOF", err.Error())
-	assert.False(t, exists)
-	assert.Nil(t, res)
-
-	res, exists, err = zone.Lookup("invalid1.example.com.", A)
-	assert.Equal(t, "invalid set: invalid name: foo", err.Error())
-	assert.False(t, exists)
-	assert.Nil(t, res)
-
-	res, exists, err = zone.Lookup("invalid2.example.com.", A)
-	assert.Equal(t, "set does not belong to zone: foo.", err.Error())
-	assert.False(t, exists)
-	assert.Nil(t, res)
-
-	res, exists, err = zone.Lookup("multiple.example.com.", A)
-	assert.Equal(t, "multiple sets for same type", err.Error())
-	assert.False(t, exists)
-	assert.Nil(t, res)
-
-	res, exists, err = zone.Lookup("example.com.", A)
-	assert.Equal(t, "invalid CNAME set at apex: example.com.", err.Error())
-	assert.False(t, exists)
-	assert.Nil(t, res)
-
-	res, exists, err = zone.Lookup("cname.example.com.", A)
-	assert.Equal(t, "other sets with CNAME set: cname.example.com.", err.Error())
-	assert.False(t, exists)
-	assert.Nil(t, res)
+	for i, item := range table {
+		res, exists, err := zone.Lookup(item.name, A)
+		assert.Equal(t, item.err, err.Error(), i)
+		assert.False(t, exists, i)
+		assert.Nil(t, res, i)
+	}
 }
