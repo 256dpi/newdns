@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/miekg/dns"
+	"github.com/pkg/errors"
 )
 
 // Event denotes an event type emitted to the logger.
@@ -210,6 +211,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	// get zone
 	zone, err := s.config.Handler(name)
 	if err != nil {
+		err = errors.Wrap(err, "server handler error")
 		s.log(BackendError, nil, err, "")
 		s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
 		return

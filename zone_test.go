@@ -156,7 +156,7 @@ func TestZoneLookup(t *testing.T) {
 	assert.Nil(t, res)
 
 	res, exists, err = zone.Lookup("error.example.com.", A)
-	assert.Equal(t, "handler error: EOF", err.Error())
+	assert.Equal(t, "zone handler error: EOF", err.Error())
 	assert.False(t, exists)
 	assert.Nil(t, res)
 

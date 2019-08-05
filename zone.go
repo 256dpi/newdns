@@ -163,7 +163,7 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 		// get sets
 		sets, err := z.Handler(TrimZone(z.Name, name))
 		if err != nil {
-			return nil, false, errors.Wrap(err, "handler error")
+			return nil, false, errors.Wrap(err, "zone handler error")
 		}
 
 		// return immediately if initial set is empty
