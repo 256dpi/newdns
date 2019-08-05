@@ -98,16 +98,6 @@ func (s *Server) accept(dh dns.Header) dns.MsgAcceptAction {
 		return dns.MsgIgnore
 	}
 
-	// check answer and authoritative records
-	if dh.Ancount > 0 || dh.Nscount > 0 {
-		return dns.MsgReject
-	}
-
-	// check additional records
-	if dh.Arcount > 2 {
-		return dns.MsgReject
-	}
-
 	return dns.MsgAccept
 }
 

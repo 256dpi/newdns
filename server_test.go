@@ -1086,6 +1086,13 @@ func abstractTest(t *testing.T, proto, addr string) {
 		}, ret)
 	})
 
+	t.Run("UnsupportedMessage", func(t *testing.T) {
+		_, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+			msg.Response = true
+		})
+		assert.True(t, isIOError(err), err)
+	})
+
 	t.Run("UnsupportedOpcode", func(t *testing.T) {
 		_, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.Opcode = dns.OpcodeNotify
@@ -1100,8 +1107,69 @@ func abstractTest(t *testing.T, proto, addr string) {
 		assert.True(t, isIOError(err), err)
 	})
 
-	t.Run("UnsupportedType", func(t *testing.T) {
-		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "NULL", dns.RcodeNameError)
+	t.Run("IgnorePayload", func(t *testing.T) {
+		ret, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+			msg.Answer = []dns.RR{
+				&dns.A{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeA,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 4,
+					},
+					A: net.ParseIP("1.2.3.4"),
+				},
+				&dns.AAAA{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeAAAA,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 4,
+					},
+					AAAA: net.ParseIP("1:2:3:4::"),
+				},
+			}
+			msg.Ns = []dns.RR{
+				nsRRs[0],
+			}
+			msg.Extra = []dns.RR{
+				&dns.TXT{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeTXT,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 4,
+					},
+					Txt: []string{"baz"},
+				},
+			}
+		})
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "newdns.256dpi.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.A{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeA,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 4,
+					},
+					A: net.ParseIP("1.2.3.4"),
+				},
+			},
+			Ns: nsRRs,
+		}, ret)
 	})
 
 	t.Run("MultipleQuestions", func(t *testing.T) {
@@ -1113,6 +1181,10 @@ func abstractTest(t *testing.T, proto, addr string) {
 			})
 		})
 		assert.True(t, isIOError(err), err)
+	})
+
+	t.Run("UnsupportedType", func(t *testing.T) {
+		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "NULL", dns.RcodeNameError)
 	})
 
 	t.Run("NonAuthoritativeZone", func(t *testing.T) {
