@@ -192,8 +192,10 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	}
 
 	// lookup main record
-	result, avl, handled := s.lookup(w, rq, rs, zone, name, typ)
-	if handled {
+	result, avl, err := s.lookup(zone, name, typ)
+	if err != nil {
+		s.writeError(w, rs, dns.RcodeServerFailure)
+		s.reportError(rq, err.Error())
 		return
 	}
 
@@ -223,8 +225,10 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 		case *dns.MX:
 			// lookup internal MX target A and AAAA records
 			if InZone(zone.Name, record.Mx) {
-				result, _, handled := s.lookup(w, rq, rs, zone, record.Mx, TypeA, TypeAAAA)
-				if handled {
+				result, _, err = s.lookup(zone, record.Mx, TypeA, TypeAAAA)
+				if err != nil {
+					s.writeError(w, rs, dns.RcodeServerFailure)
+					s.reportError(rq, err.Error())
 					return
 				}
 
@@ -253,7 +257,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	s.writeMessage(w, rq, rs)
 }
 
-func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name string, needle ...Type) ([]result, bool, bool) {
+func (s *Server) lookup(zone *Zone, name string, needle ...Type) ([]result, bool, error) {
 	// prepare result
 	var res []result
 
@@ -262,14 +266,12 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 		// get sets
 		sets, err := zone.Handler(TrimZone(zone.Name, name))
 		if err != nil {
-			s.writeError(w, rs, dns.RcodeServerFailure)
-			s.reportError(rq, err.Error())
-			return nil, false, true
+			return nil, false, err
 		}
 
 		// return if initial set is empty
 		if i == 0 && len(sets) == 0 {
-			return nil, false, false
+			return nil, false, nil
 		}
 
 		// prepare counters
@@ -286,9 +288,7 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 			// validate set
 			err = set.Validate()
 			if err != nil {
-				s.writeError(w, rs, dns.RcodeServerFailure)
-				s.reportError(rq, err.Error())
-				return nil, false, true
+				return nil, false, err
 			}
 
 			// increment counter
@@ -298,24 +298,18 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 		// check counters
 		for _, counter := range counters {
 			if counter > 1 {
-				s.writeError(w, rs, dns.RcodeServerFailure)
-				s.reportError(rq, "multiple sets for same type")
-				return nil, false, true
+				return nil, false, fmt.Errorf("multiple sets for same type")
 			}
 		}
 
 		// check apex CNAME
 		if counters[TypeCNAME] > 0 && name == zone.Name {
-			s.writeError(w, rs, dns.RcodeServerFailure)
-			s.reportError(rq, "invalid CNAME at apex")
-			return nil, false, true
+			return nil, false, fmt.Errorf("invalid CNAME at apex")
 		}
 
 		// check CNAME is stand-alone
 		if counters[TypeCNAME] > 0 && (len(sets) > 1) {
-			s.writeError(w, rs, dns.RcodeServerFailure)
-			s.reportError(rq, "a CNAME set must be stand-alone")
-			return nil, false, true
+			return nil, false, fmt.Errorf("a CNAME set must be stand-alone")
 		}
 
 		// check if CNAME and query is not CNAME
@@ -332,7 +326,7 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 				continue
 			}
 
-			return res, false, false
+			return res, false, nil
 		}
 
 		// add matching set
@@ -351,10 +345,10 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 		// return if there are not matches, but indicate that there are sets
 		// available for other types
 		if len(res) == 0 {
-			return nil, true, false
+			return nil, true, nil
 		}
 
-		return res, false, false
+		return res, false, nil
 	}
 }
 
