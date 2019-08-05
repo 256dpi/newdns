@@ -371,22 +371,22 @@ func (s *Server) reportError(r *dns.Msg, msg string) {
 	}
 }
 
-func (s *Server) convert(query string, zone *Zone, result Set) []dns.RR {
+func (s *Server) convert(query string, zone *Zone, set Set) []dns.RR {
 	// prepare header
 	header := dns.RR_Header{
-		Name:   transferCase(query, result.Name),
-		Rrtype: uint16(result.Type),
+		Name:   transferCase(query, set.Name),
+		Rrtype: uint16(set.Type),
 		Class:  dns.ClassINET,
-		Ttl:    durationToTime(zone.minTTL(result.TTL)),
+		Ttl:    durationToTime(zone.minTTL(set.TTL)),
 	}
 
 	// prepare list
 	var list []dns.RR
 
 	// add records
-	for _, record := range result.Records {
+	for _, record := range set.Records {
 		// construct record
-		switch result.Type {
+		switch set.Type {
 		case TypeA:
 			list = append(list, &dns.A{
 				Hdr: header,
