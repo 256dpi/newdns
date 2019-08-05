@@ -73,6 +73,15 @@ func (s *Set) Validate() error {
 		return s.Records[i].Address < s.Records[j].Address
 	})
 
+	// check for duplicate addresses if not TXT
+	if len(s.Records) > 1 && s.Type != TXT {
+		for i := 0; i < len(s.Records)-1; i++ {
+			if s.Records[i].Address == s.Records[i+1].Address {
+				return errors.Errorf("duplicate address: %s", s.Records[i].Address)
+			}
+		}
+	}
+
 	// set default ttl
 	if s.TTL == 0 {
 		s.TTL = 5 * time.Minute

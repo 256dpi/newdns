@@ -61,6 +61,17 @@ func TestSetValidate(t *testing.T) {
 			},
 			err: "multiple CNAME records",
 		},
+		{
+			set: Set{
+				Name: "example.com.",
+				Type: A,
+				Records: []Record{
+					{Address: "1.2.3.4"},
+					{Address: "1.2.3.4"},
+				},
+			},
+			err: "duplicate address: 1.2.3.4",
+		},
 	}
 
 	for i, item := range table {
