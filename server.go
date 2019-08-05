@@ -424,7 +424,6 @@ func (s *Server) writeMessage(w dns.ResponseWriter, rq, rs *dns.Msg) {
 		rs.Answer = nil
 		rs.Ns = nil
 		rs.Extra = nil
-		rs.Rcode = dns.RcodeSuccess
 	}
 
 	// write message
