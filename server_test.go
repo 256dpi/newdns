@@ -63,11 +63,11 @@ var nsRRs = []dns.RR{
 
 func TestAWS(t *testing.T) {
 	t.Run("UDP", func(t *testing.T) {
-		abstractTest(t, "udp", awsPrimaryNS+":53")
+		conformanceTests(t, "udp", awsPrimaryNS+":53")
 	})
 
 	t.Run("TCP", func(t *testing.T) {
-		abstractTest(t, "tcp", awsPrimaryNS+":53")
+		conformanceTests(t, "tcp", awsPrimaryNS+":53")
 	})
 }
 
@@ -256,18 +256,18 @@ func TestServer(t *testing.T) {
 
 	run(server, addr, func() {
 		t.Run("UDP", func(t *testing.T) {
-			abstractTest(t, "udp", addr)
-			customTest(t, "udp", addr)
+			conformanceTests(t, "udp", addr)
+			additionalTests(t, "udp", addr)
 		})
 
 		t.Run("TCP", func(t *testing.T) {
-			abstractTest(t, "tcp", addr)
-			customTest(t, "tcp", addr)
+			conformanceTests(t, "tcp", addr)
+			additionalTests(t, "tcp", addr)
 		})
 	})
 }
 
-func abstractTest(t *testing.T, proto, addr string) {
+func conformanceTests(t *testing.T, proto, addr string) {
 	t.Run("ApexA", func(t *testing.T) {
 		ret, err := query(proto, addr, "newdns.256dpi.com.", "A", nil)
 		assert.NoError(t, err)
@@ -935,7 +935,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 		assertMissing(t, proto, addr, "text.newdns.256dpi.com.", "A", dns.RcodeSuccess)
 	})
 
-	t.Run("NoRecord", func(t *testing.T) {
+	t.Run("NoExistingRecord", func(t *testing.T) {
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "A", dns.RcodeNameError)
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "AAAA", dns.RcodeNameError)
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "CNAME", dns.RcodeNameError)
@@ -1205,7 +1205,7 @@ func abstractTest(t *testing.T, proto, addr string) {
 	})
 }
 
-func customTest(t *testing.T, proto, addr string) {
+func additionalTests(t *testing.T, proto, addr string) {
 	t.Run("UnsupportedAny", func(t *testing.T) {
 		ret, err := query(proto, addr, "newdns.256dpi.com.", "ANY", nil)
 		assert.NoError(t, err)
