@@ -255,8 +255,8 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 		return
 	}
 
-	// lookup main result
-	result, exists, err := zone.Lookup(name, typ)
+	// lookup main answer
+	answer, exists, err := zone.Lookup(name, typ)
 	if err != nil {
 		s.log(BackendError, nil, err, "")
 		s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
@@ -264,7 +264,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	}
 
 	// check result
-	if len(result) == 0 {
+	if len(answer) == 0 {
 		// write SOA with success code to indicate existence of other sets
 		if exists {
 			s.writeError(w, rq, rs, zone, dns.RcodeSuccess)
@@ -277,30 +277,38 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 		return
 	}
 
-	// set answer
-	for _, res := range result {
-		rs.Answer = append(rs.Answer, s.convert(question.Name, zone, res)...)
-	}
+	// prepare extra set
+	var extra []Set
 
-	// check answers
-	for _, answer := range rs.Answer {
-		switch record := answer.(type) {
-		case *dns.MX:
-			// lookup internal MX target A and AAAA records
-			if InZone(zone.Name, record.Mx) {
-				result, _, err = zone.Lookup(record.Mx, A, AAAA)
-				if err != nil {
-					s.log(BackendError, nil, err, "")
-					s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
-					return
-				}
+	// lookup extra sets
+	for _, set := range answer {
+		for _, record := range set.Records {
+			switch set.Type {
+			case MX:
+				// lookup internal MX target A and AAAA records
+				if InZone(zone.Name, record.Address) {
+					ret, _, err := zone.Lookup(record.Address, A, AAAA)
+					if err != nil {
+						s.log(BackendError, nil, err, "")
+						s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
+						return
+					}
 
-				// add results to extra
-				for _, res := range result {
-					rs.Extra = append(rs.Extra, s.convert(question.Name, zone, res)...)
+					// add to extra
+					extra = append(extra, ret...)
 				}
 			}
 		}
+	}
+
+	// set answer
+	for _, set := range answer {
+		rs.Answer = append(rs.Answer, s.convert(question.Name, zone, set)...)
+	}
+
+	// set extra
+	for _, set := range extra {
+		rs.Extra = append(rs.Extra, s.convert(question.Name, zone, set)...)
 	}
 
 	// add ns records
