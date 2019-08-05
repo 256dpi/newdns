@@ -312,7 +312,7 @@ func TestServer(t *testing.T) {
 
 func conformanceTests(t *testing.T, proto, addr string) {
 	t.Run("ApexA", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "A", nil)
+		ret, err := Query(proto, addr, "newdns.256dpi.com.", "A", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -339,7 +339,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("ApexAAAA", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "AAAA", nil)
+		ret, err := Query(proto, addr, "newdns.256dpi.com.", "AAAA", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -366,7 +366,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("ApexCNAME", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "CNAME", nil)
+		ret, err := Query(proto, addr, "newdns.256dpi.com.", "CNAME", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -399,7 +399,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("ApexSOA", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "SOA", nil)
+		ret, err := Query(proto, addr, "newdns.256dpi.com.", "SOA", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -473,7 +473,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("ApexNS", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "NS", nil)
+		ret, err := Query(proto, addr, "newdns.256dpi.com.", "NS", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -488,7 +488,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("ApexTXT", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "TXT", nil)
+		ret, err := Query(proto, addr, "newdns.256dpi.com.", "TXT", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -525,7 +525,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubA", func(t *testing.T) {
-		ret, err := query(proto, addr, "ip4.newdns.256dpi.com.", "A", nil)
+		ret, err := Query(proto, addr, "ip4.newdns.256dpi.com.", "A", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -552,7 +552,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubAAAA", func(t *testing.T) {
-		ret, err := query(proto, addr, "ip6.newdns.256dpi.com.", "AAAA", nil)
+		ret, err := Query(proto, addr, "ip6.newdns.256dpi.com.", "AAAA", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -579,7 +579,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubCNAME", func(t *testing.T) {
-		ret, err := query(proto, addr, "example.newdns.256dpi.com.", "CNAME", nil)
+		ret, err := Query(proto, addr, "example.newdns.256dpi.com.", "CNAME", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -606,7 +606,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubMX", func(t *testing.T) {
-		ret, err := query(proto, addr, "mail.newdns.256dpi.com.", "MX", nil)
+		ret, err := Query(proto, addr, "mail.newdns.256dpi.com.", "MX", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -634,7 +634,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubMultiMX", func(t *testing.T) {
-		ret, err := query(proto, addr, "multimail.newdns.256dpi.com.", "MX", nil)
+		ret, err := Query(proto, addr, "multimail.newdns.256dpi.com.", "MX", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -684,7 +684,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubTXT", func(t *testing.T) {
-		ret, err := query(proto, addr, "text.newdns.256dpi.com.", "TXT", nil)
+		ret, err := Query(proto, addr, "text.newdns.256dpi.com.", "TXT", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -711,7 +711,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubCNAMEForA", func(t *testing.T) {
-		ret, err := query(proto, addr, "example.newdns.256dpi.com.", "A", nil)
+		ret, err := Query(proto, addr, "example.newdns.256dpi.com.", "A", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -738,7 +738,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubCNAMEForAAAA", func(t *testing.T) {
-		ret, err := query(proto, addr, "example.newdns.256dpi.com.", "AAAA", nil)
+		ret, err := Query(proto, addr, "example.newdns.256dpi.com.", "AAAA", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -765,7 +765,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubCNAMEForAWithA", func(t *testing.T) {
-		ret, err := query(proto, addr, "ref4.newdns.256dpi.com.", "A", nil)
+		ret, err := Query(proto, addr, "ref4.newdns.256dpi.com.", "A", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -802,7 +802,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubCNAMEForAAAAWithAAAA", func(t *testing.T) {
-		ret, err := query(proto, addr, "ref6.newdns.256dpi.com.", "AAAA", nil)
+		ret, err := Query(proto, addr, "ref6.newdns.256dpi.com.", "AAAA", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -839,7 +839,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubCNAMEWithoutA", func(t *testing.T) {
-		ret, err := query(proto, addr, "ref4.newdns.256dpi.com.", "CNAME", nil)
+		ret, err := Query(proto, addr, "ref4.newdns.256dpi.com.", "CNAME", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -866,7 +866,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubCNAMEWithoutAAAA", func(t *testing.T) {
-		ret, err := query(proto, addr, "ref6.newdns.256dpi.com.", "CNAME", nil)
+		ret, err := Query(proto, addr, "ref6.newdns.256dpi.com.", "CNAME", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -893,7 +893,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubCNAMEForCNAMEForAWithA", func(t *testing.T) {
-		ret, err := query(proto, addr, "refref.newdns.256dpi.com.", "A", nil)
+		ret, err := Query(proto, addr, "refref.newdns.256dpi.com.", "A", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -940,7 +940,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubMXWithExtraA", func(t *testing.T) {
-		ret, err := query(proto, addr, "ref4m.newdns.256dpi.com.", "MX", nil)
+		ret, err := Query(proto, addr, "ref4m.newdns.256dpi.com.", "MX", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -980,7 +980,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("SubMXWithExtraAAAA", func(t *testing.T) {
-		ret, err := query(proto, addr, "ref6m.newdns.256dpi.com.", "MX", nil)
+		ret, err := Query(proto, addr, "ref6m.newdns.256dpi.com.", "MX", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -1037,7 +1037,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("TruncatedResponse", func(t *testing.T) {
-		ret, err := query(proto, addr, "long.newdns.256dpi.com.", "TXT", nil)
+		ret, err := Query(proto, addr, "long.newdns.256dpi.com.", "TXT", nil)
 		assert.NoError(t, err)
 
 		if proto == "udp" {
@@ -1104,7 +1104,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("CaseTransfer", func(t *testing.T) {
-		ret, err := query(proto, addr, "Ip4.NeWDnS.256dpi.com.", "A", nil)
+		ret, err := Query(proto, addr, "Ip4.NeWDnS.256dpi.com.", "A", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -1172,7 +1172,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("EDNSSuccess", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+		ret, err := Query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.SetEdns0(1337, false)
 		})
 		assert.NoError(t, err)
@@ -1212,7 +1212,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("EDNSError", func(t *testing.T) {
-		ret, err := query(proto, addr, "missing.newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+		ret, err := Query(proto, addr, "missing.newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.SetEdns0(1337, false)
 		})
 		assert.NoError(t, err)
@@ -1258,7 +1258,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("EDNSBadVersion", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+		ret, err := Query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.SetEdns0(1337, false)
 			msg.Extra[0].(*dns.OPT).SetVersion(2)
 		})
@@ -1287,7 +1287,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("EDNSLongResponse", func(t *testing.T) {
-		ret, err := query(proto, addr, "long.newdns.256dpi.com.", "TXT", func(msg *dns.Msg) {
+		ret, err := Query(proto, addr, "long.newdns.256dpi.com.", "TXT", func(msg *dns.Msg) {
 			msg.SetEdns0(1337, false)
 		})
 		assert.NoError(t, err)
@@ -1353,7 +1353,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("RecursionDesired", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+		ret, err := Query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.RecursionDesired = true
 		})
 		assert.NoError(t, err)
@@ -1383,28 +1383,28 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("UnsupportedMessage", func(t *testing.T) {
-		_, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+		_, err := Query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.Response = true
 		})
 		assert.True(t, isIOError(err), err)
 	})
 
 	t.Run("UnsupportedOpcode", func(t *testing.T) {
-		_, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+		_, err := Query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.Opcode = dns.OpcodeNotify
 		})
 		assert.True(t, isIOError(err), err)
 	})
 
 	t.Run("UnsupportedClass", func(t *testing.T) {
-		_, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+		_, err := Query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.Question[0].Qclass = dns.ClassANY
 		})
 		assert.True(t, isIOError(err), err)
 	})
 
 	t.Run("IgnorePayload", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+		ret, err := Query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.Answer = []dns.RR{
 				&dns.A{
 					Hdr: dns.RR_Header{
@@ -1469,7 +1469,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("MultipleQuestions", func(t *testing.T) {
-		_, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+		_, err := Query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.Question = append(msg.Question, dns.Question{
 				Name:   "newdns.256dpi.com.",
 				Qtype:  dns.TypeA,
@@ -1484,7 +1484,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	})
 
 	t.Run("NonAuthoritativeZone", func(t *testing.T) {
-		ret, err := query(proto, addr, "foo.256dpi.com.", "A", nil)
+		ret, err := Query(proto, addr, "foo.256dpi.com.", "A", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -1501,7 +1501,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 
 func additionalTests(t *testing.T, proto, addr string) {
 	t.Run("UnsupportedAny", func(t *testing.T) {
-		ret, err := query(proto, addr, "newdns.256dpi.com.", "ANY", nil)
+		ret, err := Query(proto, addr, "newdns.256dpi.com.", "ANY", nil)
 		assert.NoError(t, err)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
@@ -1519,7 +1519,7 @@ func additionalTests(t *testing.T, proto, addr string) {
 func assertMissing(t *testing.T, proto, addr, name, typ string, code int) {
 	qt := dns.StringToType[typ]
 
-	ret, err := query(proto, addr, name, typ, nil)
+	ret, err := Query(proto, addr, name, typ, nil)
 	assert.NoError(t, err)
 	equalJSON(t, &dns.Msg{
 		MsgHdr: dns.MsgHdr{
