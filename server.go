@@ -221,7 +221,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 		case *dns.MX:
 			// lookup internal MX target A and AAAA records
 			if InZone(zone.Name, record.Mx) {
-				result, _, err = zone.Lookup(record.Mx, TypeA, TypeAAAA)
+				result, _, err = zone.Lookup(record.Mx, A, AAAA)
 				if err != nil {
 					s.writeError(w, rs, dns.RcodeServerFailure)
 					s.reportError(rq, err.Error())
@@ -387,28 +387,28 @@ func (s *Server) convert(query string, zone *Zone, set Set) []dns.RR {
 	for _, record := range set.Records {
 		// construct record
 		switch set.Type {
-		case TypeA:
+		case A:
 			list = append(list, &dns.A{
 				Hdr: header,
 				A:   net.ParseIP(record.Address),
 			})
-		case TypeAAAA:
+		case AAAA:
 			list = append(list, &dns.AAAA{
 				Hdr:  header,
 				AAAA: net.ParseIP(record.Address),
 			})
-		case TypeCNAME:
+		case CNAME:
 			list = append(list, &dns.CNAME{
 				Hdr:    header,
 				Target: dns.Fqdn(record.Address),
 			})
-		case TypeMX:
+		case MX:
 			list = append(list, &dns.MX{
 				Hdr:        header,
 				Preference: uint16(record.Priority),
 				Mx:         dns.Fqdn(record.Address),
 			})
-		case TypeTXT:
+		case TXT:
 			list = append(list, &dns.TXT{
 				Hdr: header,
 				Txt: record.Data,

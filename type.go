@@ -7,25 +7,25 @@ type Type uint16
 
 const (
 	// A records return IPV4 addresses.
-	TypeA = Type(dns.TypeA)
+	A = Type(dns.TypeA)
 
 	// AAAA records return IPV6 addresses.
-	TypeAAAA = Type(dns.TypeAAAA)
+	AAAA = Type(dns.TypeAAAA)
 
 	// CNAME records return other DNS names.
-	TypeCNAME = Type(dns.TypeCNAME)
+	CNAME = Type(dns.TypeCNAME)
 
 	// MX records return mails servers with their priorities. The target mail
 	// servers must itself be returned with an A or AAAA record.
-	TypeMX = Type(dns.TypeMX)
+	MX = Type(dns.TypeMX)
 
 	// TXT records return arbitrary text data.
-	TypeTXT = Type(dns.TypeTXT)
+	TXT = Type(dns.TypeTXT)
 )
 
 func (t Type) valid() bool {
 	switch t {
-	case TypeA, TypeAAAA, TypeCNAME, TypeMX, TypeTXT:
+	case A, AAAA, CNAME, MX, TXT:
 		return true
 	default:
 		return false

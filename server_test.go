@@ -94,21 +94,21 @@ func TestServer(t *testing.T) {
 				return []Set{
 					{
 						Name: "newdns.256dpi.com.",
-						Type: TypeA,
+						Type: A,
 						Records: []Record{
 							{Address: "1.2.3.4"},
 						},
 					},
 					{
 						Name: "newdns.256dpi.com.",
-						Type: TypeAAAA,
+						Type: AAAA,
 						Records: []Record{
 							{Address: "1:2:3:4::"},
 						},
 					},
 					{
 						Name: "newdns.256dpi.com.",
-						Type: TypeTXT,
+						Type: TXT,
 						Records: []Record{
 							{Data: []string{"foo", "bar"}},
 							{Data: []string{"baz"}},
@@ -122,7 +122,7 @@ func TestServer(t *testing.T) {
 				return []Set{
 					{
 						Name: "example.newdns.256dpi.com.",
-						Type: TypeCNAME,
+						Type: CNAME,
 						Records: []Record{
 							{Address: "example.com."},
 						},
@@ -135,7 +135,7 @@ func TestServer(t *testing.T) {
 				return []Set{
 					{
 						Name: "ip4.newdns.256dpi.com.",
-						Type: TypeA,
+						Type: A,
 						Records: []Record{
 							{Address: "1.2.3.4"},
 						},
@@ -148,7 +148,7 @@ func TestServer(t *testing.T) {
 				return []Set{
 					{
 						Name: "ip6.newdns.256dpi.com.",
-						Type: TypeAAAA,
+						Type: AAAA,
 						Records: []Record{
 							{Address: "1:2:3:4::"},
 						},
@@ -161,7 +161,7 @@ func TestServer(t *testing.T) {
 				return []Set{
 					{
 						Name: "mail.newdns.256dpi.com.",
-						Type: TypeMX,
+						Type: MX,
 						Records: []Record{
 							{Address: "mail.example.com.", Priority: 7},
 						},
@@ -174,7 +174,7 @@ func TestServer(t *testing.T) {
 				return []Set{
 					{
 						Name: "multimail.newdns.256dpi.com.",
-						Type: TypeMX,
+						Type: MX,
 						Records: []Record{
 							{Address: "mail1.example.com.", Priority: 1},
 							{Address: "mail2.example.com.", Priority: 10},
@@ -189,7 +189,7 @@ func TestServer(t *testing.T) {
 				return []Set{
 					{
 						Name: "text.newdns.256dpi.com.",
-						Type: TypeTXT,
+						Type: TXT,
 						Records: []Record{
 							{Data: []string{"foo", "bar"}},
 						},
@@ -202,7 +202,7 @@ func TestServer(t *testing.T) {
 				return []Set{
 					{
 						Name: "ref4.newdns.256dpi.com.",
-						Type: TypeCNAME,
+						Type: CNAME,
 						Records: []Record{
 							{Address: "ip4.newdns.256dpi.com."},
 						},
@@ -215,7 +215,7 @@ func TestServer(t *testing.T) {
 				return []Set{
 					{
 						Name: "ref6.newdns.256dpi.com.",
-						Type: TypeCNAME,
+						Type: CNAME,
 						Records: []Record{
 							{Address: "ip6.newdns.256dpi.com."},
 						},
@@ -228,7 +228,7 @@ func TestServer(t *testing.T) {
 				return []Set{
 					{
 						Name: "refref.newdns.256dpi.com.",
-						Type: TypeCNAME,
+						Type: CNAME,
 						Records: []Record{
 							{Address: "ref4.newdns.256dpi.com."},
 						},
@@ -241,7 +241,7 @@ func TestServer(t *testing.T) {
 				return []Set{
 					{
 						Name: "ref4m.newdns.256dpi.com.",
-						Type: TypeMX,
+						Type: MX,
 						Records: []Record{
 							{Address: "ip4.newdns.256dpi.com.", Priority: 7},
 						},
@@ -254,7 +254,7 @@ func TestServer(t *testing.T) {
 				return []Set{
 					{
 						Name: "ref6m.newdns.256dpi.com.",
-						Type: TypeMX,
+						Type: MX,
 						Records: []Record{
 							{Address: "ip6.newdns.256dpi.com.", Priority: 7},
 						},
@@ -267,7 +267,7 @@ func TestServer(t *testing.T) {
 				return []Set{
 					{
 						Name: "long.newdns.256dpi.com.",
-						Type: TypeTXT,
+						Type: TXT,
 						Records: []Record{
 							{Data: []string{"z4e6ycRMp6MP3WvWQMxIAOXglxANbj3oB0xD8BffktO4eo3VCR0s6TyGHKixvarOFJU0fqNkXeFOeI7sTXH5X0iXZukfLgnGTxLXNC7KkVFwtVFsh1P0IUNXtNBlOVWrVbxkS62ezbLpENNkiBwbkCvcTjwF2kyI0curAt9JhhJFb3AAq0q1iHWlJLn1KSrev9PIsY3alndDKjYTPxAojxzGKdK3A7rWLJ8Uzb3Z5OhLwP7jTKqbWVUocJRFLYp"}},
 							{Data: []string{"gyK4oL9X8Zn3b6TwmUIYAgQx43rBOWMqJWR3wGMGNaZgajnhd2u9JaIbGwNo6gzZunyKYRxID3mKLmYUCcIrNYuo8R4UkijZeshwqEAM2EWnjNsB1hJHOlu6VyRKW13rsFUJedOSqc7YjjUoxm9c3mF28tEXmc3GVsC476wJ2ciSbp7ujDjQ032SQRD6kpayzFX8GncS5KXP8mLK2ZIqK2U4fUmYEpTPQMmp7w24GKkfGJzE4JfMBxSybDUScLq"}},

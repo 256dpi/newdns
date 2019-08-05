@@ -166,11 +166,11 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 
 		// prepare counters
 		counters := map[Type]int{
-			TypeA:     0,
-			TypeAAAA:  0,
-			TypeCNAME: 0,
-			TypeMX:    0,
-			TypeTXT:   0,
+			A:     0,
+			AAAA:  0,
+			CNAME: 0,
+			MX:    0,
+			TXT:   0,
 		}
 
 		// validate sets
@@ -193,17 +193,17 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 		}
 
 		// check apex CNAME
-		if counters[TypeCNAME] > 0 && name == z.Name {
+		if counters[CNAME] > 0 && name == z.Name {
 			return nil, false, fmt.Errorf("invalid CNAME at apex")
 		}
 
 		// check CNAME is stand-alone
-		if counters[TypeCNAME] > 0 && (len(sets) > 1) {
+		if counters[CNAME] > 0 && (len(sets) > 1) {
 			return nil, false, fmt.Errorf("a CNAME set must be stand-alone")
 		}
 
 		// check if CNAME and query is not CNAME
-		if counters[TypeCNAME] > 0 && !typeInList(needle, TypeCNAME) {
+		if counters[CNAME] > 0 && !typeInList(needle, CNAME) {
 			// add set to result
 			result = append(result, sets[0])
 

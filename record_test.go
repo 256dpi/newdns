@@ -13,63 +13,63 @@ func TestRecord(t *testing.T) {
 		err string
 	}{
 		{
-			typ: TypeA,
+			typ: A,
 			rec: Record{Address: ""},
 			err: "invalid IPv4 address",
 		},
 		{
-			typ: TypeAAAA,
+			typ: AAAA,
 			rec: Record{Address: ""},
 			err: "invalid IPv6 address",
 		},
 		{
-			typ: TypeA,
+			typ: A,
 			rec: Record{Address: "1:2:3:4::"},
 			err: "invalid IPv4 address",
 		},
 		{
-			typ: TypeA,
+			typ: A,
 			rec: Record{Address: "1.2.3.4"},
 		},
 		{
-			typ: TypeAAAA,
+			typ: AAAA,
 			rec: Record{Address: "1:2:3:4::"},
 		},
 		{
-			typ: TypeCNAME,
+			typ: CNAME,
 			rec: Record{Address: ""},
 			err: "invalid domain address",
 		},
 		{
-			typ: TypeCNAME,
+			typ: CNAME,
 			rec: Record{Address: "foo.com"},
 			err: "invalid domain address",
 		},
 		{
-			typ: TypeCNAME,
+			typ: CNAME,
 			rec: Record{Address: "foo.com."},
 		},
 		{
-			typ: TypeMX,
+			typ: MX,
 			rec: Record{Address: "foo.com"},
 			err: "invalid domain address",
 		},
 		{
-			typ: TypeMX,
+			typ: MX,
 			rec: Record{Address: "foo.com."},
 		},
 		{
-			typ: TypeTXT,
+			typ: TXT,
 			rec: Record{Data: nil},
 			err: "missing data",
 		},
 		{
-			typ: TypeTXT,
+			typ: TXT,
 			rec: Record{Data: []string{"z4e6ycRMp6MP3WvWQMxIAOXglxANbj3oB0xD8BffktO4eo3VCR0s6TyGHKixvarOFJU0fqNkXeFOeI7sTXH5X0iXZukfLgnGTxLXNC7KkVFwtVFsh1P0IUNXtNBlOVWrVbxkS62ezbLpENNkiBwbkCvcTjwF2kyI0curAt9JhhJFb3AAq0q1iHWlJLn1KSrev9PIsY3alndDKjYTPxAojxzGKdK3A7rWLJ8Uzb3Z5OhLwP7jTKqbWVUocJRFLYpL"}},
 			err: "data too long",
 		},
 		{
-			typ: TypeTXT,
+			typ: TXT,
 			rec: Record{Data: []string{"foo"}},
 		},
 	}

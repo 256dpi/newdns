@@ -46,7 +46,7 @@ func (s *Set) Validate(zone string) error {
 	}
 
 	// check CNAME records
-	if s.Type == TypeCNAME && len(s.Records) > 1 {
+	if s.Type == CNAME && len(s.Records) > 1 {
 		return fmt.Errorf("multiple CNAME records")
 	}
 

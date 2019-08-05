@@ -22,13 +22,13 @@ func main() {
 			if name == "" {
 				return []newdns.Set{
 					{
-						Type: newdns.TypeA,
+						Type: newdns.A,
 						Records: []newdns.Record{
 							{Address: "1.2.3.4"},
 						},
 					},
 					{
-						Type: newdns.TypeAAAA,
+						Type: newdns.AAAA,
 						Records: []newdns.Record{
 							{Address: "1:2:3:4::"},
 						},

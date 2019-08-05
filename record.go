@@ -20,7 +20,7 @@ type Record struct {
 // Validate will validate the record.
 func (r *Record) Validate(typ Type) error {
 	// validate A address
-	if typ == TypeA {
+	if typ == A {
 		ip := net.ParseIP(r.Address)
 		if ip == nil || ip.To4() == nil {
 			return fmt.Errorf("invalid IPv4 address")
@@ -28,7 +28,7 @@ func (r *Record) Validate(typ Type) error {
 	}
 
 	// validate AAAA address
-	if typ == TypeAAAA {
+	if typ == AAAA {
 		ip := net.ParseIP(r.Address)
 		if ip == nil || ip.To16() == nil {
 			return fmt.Errorf("invalid IPv6 address")
@@ -36,14 +36,14 @@ func (r *Record) Validate(typ Type) error {
 	}
 
 	// validate CNAME and MX addresses
-	if typ == TypeCNAME || typ == TypeMX {
+	if typ == CNAME || typ == MX {
 		if !IsDomain(r.Address, true) {
 			return fmt.Errorf("invalid domain address")
 		}
 	}
 
 	// check TXT data
-	if typ == TypeTXT {
+	if typ == TXT {
 		if len(r.Data) == 0 {
 			return fmt.Errorf("missing data")
 		}
@@ -60,11 +60,11 @@ func (r *Record) Validate(typ Type) error {
 
 func (r *Record) sortKey(typ Type) string {
 	switch typ {
-	case TypeA, TypeAAAA, TypeCNAME:
+	case A, AAAA, CNAME:
 		return r.Address
-	case TypeMX:
+	case MX:
 		return fmt.Sprintf("%020d %s", r.Priority, r.Address)
-	case TypeTXT:
+	case TXT:
 		return r.Data[0]
 	default:
 		return ""

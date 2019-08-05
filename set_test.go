@@ -30,14 +30,14 @@ func TestSet(t *testing.T) {
 		{
 			set: Set{
 				Name: "example.com.",
-				Type: TypeA,
+				Type: A,
 			},
 			err: "missing records",
 		},
 		{
 			set: Set{
 				Name:    "example.com.",
-				Type:    TypeA,
+				Type:    A,
 				Records: []Record{{}},
 			},
 			err: "invalid IPv4 address",
@@ -45,7 +45,7 @@ func TestSet(t *testing.T) {
 		{
 			set: Set{
 				Name:    "example.com.",
-				Type:    TypeTXT,
+				Type:    TXT,
 				Records: []Record{{}},
 			},
 			err: "missing data",
@@ -53,7 +53,7 @@ func TestSet(t *testing.T) {
 		{
 			set: Set{
 				Name:    "example.com.",
-				Type:    TypeCNAME,
+				Type:    CNAME,
 				Records: []Record{{}, {}},
 			},
 			err: "multiple CNAME records",
