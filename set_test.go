@@ -13,28 +13,55 @@ func TestSet(t *testing.T) {
 	}{
 		{
 			set: Set{},
+			err: "invalid name",
+		},
+		{
+			set: Set{
+				Name: "hello.com.",
+			},
+			err: "name does not belong to zone",
+		},
+		{
+			set: Set{
+				Name: "example.com.",
+			},
 			err: "invalid type",
 		},
 		{
-			set: Set{Type: TypeA},
+			set: Set{
+				Name: "example.com.",
+				Type: TypeA,
+			},
 			err: "missing records",
 		},
 		{
-			set: Set{Type: TypeA, Records: []Record{{}}},
+			set: Set{
+				Name:    "example.com.",
+				Type:    TypeA,
+				Records: []Record{{}},
+			},
 			err: "invalid IPv4 address",
 		},
 		{
-			set: Set{Type: TypeTXT, Records: []Record{{}}},
+			set: Set{
+				Name:    "example.com.",
+				Type:    TypeTXT,
+				Records: []Record{{}},
+			},
 			err: "missing data",
 		},
 		{
-			set: Set{Type: TypeCNAME, Records: []Record{{},{}}},
+			set: Set{
+				Name:    "example.com.",
+				Type:    TypeCNAME,
+				Records: []Record{{}, {}},
+			},
 			err: "multiple CNAME records",
 		},
 	}
 
 	for i, item := range table {
-		err := item.set.Validate()
+		err := item.set.Validate("example.com.")
 		if err != nil {
 			assert.EqualValues(t, item.err, err.Error(), i)
 		} else {

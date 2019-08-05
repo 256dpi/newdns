@@ -93,18 +93,21 @@ func TestServer(t *testing.T) {
 			if name == "" {
 				return []Set{
 					{
+						Name: "newdns.256dpi.com.",
 						Type: TypeA,
 						Records: []Record{
 							{Address: "1.2.3.4"},
 						},
 					},
 					{
+						Name: "newdns.256dpi.com.",
 						Type: TypeAAAA,
 						Records: []Record{
 							{Address: "1:2:3:4::"},
 						},
 					},
 					{
+						Name: "newdns.256dpi.com.",
 						Type: TypeTXT,
 						Records: []Record{
 							{Data: []string{"foo", "bar"}},
@@ -118,6 +121,7 @@ func TestServer(t *testing.T) {
 			if name == "example" {
 				return []Set{
 					{
+						Name: "example.newdns.256dpi.com.",
 						Type: TypeCNAME,
 						Records: []Record{
 							{Address: "example.com."},
@@ -130,6 +134,7 @@ func TestServer(t *testing.T) {
 			if name == "ip4" {
 				return []Set{
 					{
+						Name: "ip4.newdns.256dpi.com.",
 						Type: TypeA,
 						Records: []Record{
 							{Address: "1.2.3.4"},
@@ -142,6 +147,7 @@ func TestServer(t *testing.T) {
 			if name == "ip6" {
 				return []Set{
 					{
+						Name: "ip6.newdns.256dpi.com.",
 						Type: TypeAAAA,
 						Records: []Record{
 							{Address: "1:2:3:4::"},
@@ -154,6 +160,7 @@ func TestServer(t *testing.T) {
 			if name == "mail" {
 				return []Set{
 					{
+						Name: "mail.newdns.256dpi.com.",
 						Type: TypeMX,
 						Records: []Record{
 							{Address: "mail.example.com.", Priority: 7},
@@ -166,6 +173,7 @@ func TestServer(t *testing.T) {
 			if name == "text" {
 				return []Set{
 					{
+						Name: "text.newdns.256dpi.com.",
 						Type: TypeTXT,
 						Records: []Record{
 							{Data: []string{"foo", "bar"}},
@@ -178,6 +186,7 @@ func TestServer(t *testing.T) {
 			if name == "ref4" {
 				return []Set{
 					{
+						Name: "ref4.newdns.256dpi.com.",
 						Type: TypeCNAME,
 						Records: []Record{
 							{Address: "ip4.newdns.256dpi.com."},
@@ -190,6 +199,7 @@ func TestServer(t *testing.T) {
 			if name == "ref6" {
 				return []Set{
 					{
+						Name: "ref6.newdns.256dpi.com.",
 						Type: TypeCNAME,
 						Records: []Record{
 							{Address: "ip6.newdns.256dpi.com."},
@@ -202,6 +212,7 @@ func TestServer(t *testing.T) {
 			if name == "refref" {
 				return []Set{
 					{
+						Name: "refref.newdns.256dpi.com.",
 						Type: TypeCNAME,
 						Records: []Record{
 							{Address: "ref4.newdns.256dpi.com."},
@@ -214,6 +225,7 @@ func TestServer(t *testing.T) {
 			if name == "ref4m" {
 				return []Set{
 					{
+						Name: "ref4m.newdns.256dpi.com.",
 						Type: TypeMX,
 						Records: []Record{
 							{Address: "ip4.newdns.256dpi.com.", Priority: 7},
@@ -226,6 +238,7 @@ func TestServer(t *testing.T) {
 			if name == "ref6m" {
 				return []Set{
 					{
+						Name: "ref6m.newdns.256dpi.com.",
 						Type: TypeMX,
 						Records: []Record{
 							{Address: "ip6.newdns.256dpi.com.", Priority: 7},
@@ -238,6 +251,7 @@ func TestServer(t *testing.T) {
 			if name == "long" {
 				return []Set{
 					{
+						Name: "long.newdns.256dpi.com.",
 						Type: TypeTXT,
 						Records: []Record{
 							{Data: []string{"z4e6ycRMp6MP3WvWQMxIAOXglxANbj3oB0xD8BffktO4eo3VCR0s6TyGHKixvarOFJU0fqNkXeFOeI7sTXH5X0iXZukfLgnGTxLXNC7KkVFwtVFsh1P0IUNXtNBlOVWrVbxkS62ezbLpENNkiBwbkCvcTjwF2kyI0curAt9JhhJFb3AAq0q1iHWlJLn1KSrev9PIsY3alndDKjYTPxAojxzGKdK3A7rWLJ8Uzb3Z5OhLwP7jTKqbWVUocJRFLYp"}},

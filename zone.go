@@ -7,15 +7,6 @@ import (
 	"time"
 )
 
-// Results are returned when a name is looked up in a zone.
-type Result struct {
-	// The name of the set.
-	Name string
-
-	// The returned set.
-	Set Set
-}
-
 // Zone describes a single authoritative DNS zone.
 type Zone struct {
 	// The FQDN of the zone e.g. "example.com.".
@@ -154,12 +145,12 @@ func (z *Zone) Validate() error {
 // Lookup will lookup the specified name in the zone and return results for the
 // specified record types. If no results are returned, the second return value
 // indicates if there are other results for the specified name.
-func (z *Zone) Lookup(name string, needle ...Type) ([]Result, bool, error) {
+func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 	// enforce lowercase name
 	name = strings.ToLower(name)
 
 	// prepare result
-	var result []Result
+	var result []Set
 
 	for i := 0; ; i++ {
 		// get sets
@@ -185,7 +176,7 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Result, bool, error) {
 		// validate sets
 		for _, set := range sets {
 			// validate set
-			err = set.Validate()
+			err = set.Validate(z.Name)
 			if err != nil {
 				return nil, false, err
 			}
@@ -213,11 +204,8 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Result, bool, error) {
 
 		// check if CNAME and query is not CNAME
 		if counters[TypeCNAME] > 0 && !typeInList(needle, TypeCNAME) {
-			// add CNAME set to result
-			result = append(result, Result{
-				Name: name,
-				Set:  sets[0],
-			})
+			// add set to result
+			result = append(result, sets[0])
 
 			// get normalized address
 			address := strings.ToLower(sets[0].Records[0].Address)
@@ -234,11 +222,8 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Result, bool, error) {
 		// add matching set
 		for _, set := range sets {
 			if typeInList(needle, set.Type) {
-				// add records
-				result = append(result, Result{
-					Name: name,
-					Set:  set,
-				})
+				// add set to result
+				result = append(result, set)
 
 				break
 			}

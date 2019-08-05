@@ -8,20 +8,33 @@ import (
 
 // Set is a set of records.
 type Set struct {
+	// The FQDN of the set.
+	Name string
+
 	// The type of the record.
 	Type Type
 
 	// The records in the set.
 	Records []Record
 
-	// The TTl of the record.
+	// The TTL of the set.
 	//
 	// Default: 5m.
 	TTL time.Duration
 }
 
 // Validate will validate the set and ensure defaults.
-func (s *Set) Validate() error {
+func (s *Set) Validate(zone string) error {
+	// check name
+	if !IsDomain(s.Name, true) {
+		return fmt.Errorf("invalid name")
+	}
+
+	// check relationship
+	if !InZone(zone, s.Name) {
+		return fmt.Errorf("name does not belong to zone")
+	}
+
 	// check type
 	if !s.Type.valid() {
 		return fmt.Errorf("invalid type")
