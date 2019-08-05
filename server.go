@@ -193,7 +193,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	}
 
 	// set answer
-	rs.Answer = result
+	rs.Answer = result.convert(zone, transferCase(question.Name, name))
 
 	// check answers
 	for _, answer := range rs.Answer {
@@ -207,7 +207,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 				}
 
 				// add results to extra
-				rs.Extra = append(rs.Extra, result...)
+				rs.Extra = result.convert(zone, transferCase(question.Name, record.Mx))
 			}
 		}
 	}
@@ -216,7 +216,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	for _, ns := range zone.AllNameServers {
 		rs.Ns = append(rs.Ns, &dns.NS{
 			Hdr: dns.RR_Header{
-				Name:   zone.Name,
+				Name:   transferCase(question.Name, zone.Name),
 				Rrtype: dns.TypeNS,
 				Class:  dns.ClassINET,
 				Ttl:    durationToTime(zone.NSTTL),
@@ -229,9 +229,9 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	s.writeMessage(w, rq, rs)
 }
 
-func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name string, needle ...Type) ([]dns.RR, bool) {
+func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name string, needle ...Type) (*Set, bool) {
 	// prepare answer
-	var answer []dns.RR
+	var answer *Set
 
 	// retrieve sets for zone
 	for i := 0; ; i++ {
@@ -298,7 +298,7 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 		// check if CNAME and query is not CNAME
 		if counters[TypeCNAME] > 0 && !typeInList(needle, TypeCNAME) {
 			// add CNAME set to answer
-			answer = append(answer, sets[0].convert(zone, name)...)
+			answer = &sets[0]
 
 			// continue with CNAME address if address is in zone
 			if InZone(zone.Name, sets[0].Records[0].Address) {
@@ -314,14 +314,14 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 		for _, set := range sets {
 			if typeInList(needle, set.Type) {
 				// add records
-				answer = append(answer, set.convert(zone, name)...)
+				answer = &set
 
 				break
 			}
 		}
 
 		// write SOA with success code to indicate availability of other sets
-		if len(answer) == 0 {
+		if answer == nil {
 			s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeSuccess)
 			return nil, true
 		}

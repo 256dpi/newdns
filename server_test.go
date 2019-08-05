@@ -1024,6 +1024,74 @@ func conformanceTests(t *testing.T, proto, addr string) {
 		}
 	})
 
+	t.Run("CaseTransfer", func(t *testing.T) {
+		ret, err := query(proto, addr, "Ip4.NeWDnS.256dpi.com.", "A", nil)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "Ip4.NeWDnS.256dpi.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.A{
+					Hdr: dns.RR_Header{
+						Name:     "Ip4.NeWDnS.256dpi.com.",
+						Rrtype:   dns.TypeA,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 4,
+					},
+					A: net.ParseIP("1.2.3.4"),
+				},
+			},
+			Ns: []dns.RR{
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "NEWDNS.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 23,
+					},
+					Ns: awsNS[0],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "NEWDNS.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 19,
+					},
+					Ns: awsNS[1],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "NEWDNS.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 25,
+					},
+					Ns: awsNS[2],
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "NEWDNS.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 22,
+					},
+					Ns: awsNS[3],
+				},
+			},
+		}, ret)
+	})
+
 	t.Run("EDNSSuccess", func(t *testing.T) {
 		ret, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.SetEdns0(1337, false)
