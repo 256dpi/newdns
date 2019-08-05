@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSet(t *testing.T) {
+func TestSetValidate(t *testing.T) {
 	table := []struct {
 		set Set
 		err string
@@ -72,7 +72,7 @@ func TestSet(t *testing.T) {
 	for i, item := range table {
 		err := item.set.Validate("example.com.")
 		if err != nil {
-			assert.EqualValues(t, item.err, err.Error(), i)
+			assert.Equal(t, item.err, err.Error(), i)
 		} else {
 			assert.Equal(t, item.err, "", item)
 		}

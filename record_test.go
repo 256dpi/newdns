@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRecord(t *testing.T) {
+func TestRecordValidate(t *testing.T) {
 	table := []struct {
 		typ Type
 		rec Record
@@ -77,7 +77,7 @@ func TestRecord(t *testing.T) {
 	for i, item := range table {
 		err := item.rec.Validate(item.typ)
 		if err != nil {
-			assert.EqualValues(t, item.err, err.Error(), i)
+			assert.Equal(t, item.err, err.Error(), i)
 		} else {
 			assert.Equal(t, item.err, "", item)
 		}

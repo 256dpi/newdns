@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestZone(t *testing.T) {
+func TestZoneValidate(t *testing.T) {
 	table := []struct {
 		zne Zone
 		err string
