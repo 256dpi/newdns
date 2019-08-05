@@ -14,18 +14,18 @@ func TestRecord(t *testing.T) {
 	}{
 		{
 			typ: A,
-			rec: Record{Address: ""},
-			err: "invalid IPv4 address",
+			rec: Record{Address: "foo"},
+			err: "invalid IPv4 address: foo",
 		},
 		{
 			typ: AAAA,
-			rec: Record{Address: ""},
-			err: "invalid IPv6 address",
+			rec: Record{Address: "foo"},
+			err: "invalid IPv6 address: foo",
 		},
 		{
 			typ: A,
 			rec: Record{Address: "1:2:3:4::"},
-			err: "invalid IPv4 address",
+			err: "invalid IPv4 address: 1:2:3:4::",
 		},
 		{
 			typ: A,
@@ -37,13 +37,13 @@ func TestRecord(t *testing.T) {
 		},
 		{
 			typ: CNAME,
-			rec: Record{Address: ""},
-			err: "invalid domain address",
+			rec: Record{Address: "---"},
+			err: "invalid domain name: ---",
 		},
 		{
 			typ: CNAME,
 			rec: Record{Address: "foo.com"},
-			err: "invalid domain address",
+			err: "invalid domain name: foo.com",
 		},
 		{
 			typ: CNAME,
@@ -52,7 +52,7 @@ func TestRecord(t *testing.T) {
 		{
 			typ: MX,
 			rec: Record{Address: "foo.com"},
-			err: "invalid domain address",
+			err: "invalid domain name: foo.com",
 		},
 		{
 			typ: MX,

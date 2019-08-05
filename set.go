@@ -1,9 +1,10 @@
 package newdns
 
 import (
-	"fmt"
 	"sort"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // Set is a set of records.
@@ -27,34 +28,34 @@ type Set struct {
 func (s *Set) Validate(zone string) error {
 	// check name
 	if !IsDomain(s.Name, true) {
-		return fmt.Errorf("invalid name")
+		return errors.Errorf("invalid name: %s", s.Name)
 	}
 
 	// check relationship
 	if !InZone(zone, s.Name) {
-		return fmt.Errorf("name does not belong to zone")
+		return errors.Errorf("name does not belong to zone: %s", s.Name)
 	}
 
 	// check type
 	if !s.Type.valid() {
-		return fmt.Errorf("invalid type")
+		return errors.Errorf("invalid type: %d", s.Type)
 	}
 
 	// check records
 	if len(s.Records) == 0 {
-		return fmt.Errorf("missing records")
+		return errors.Errorf("missing records")
 	}
 
 	// check CNAME records
 	if s.Type == CNAME && len(s.Records) > 1 {
-		return fmt.Errorf("multiple CNAME records")
+		return errors.Errorf("multiple CNAME records")
 	}
 
 	// validate records
 	for _, record := range s.Records {
 		err := record.Validate(s.Type)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "invalid record")
 		}
 	}
 

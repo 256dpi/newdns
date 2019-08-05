@@ -3,6 +3,8 @@ package newdns
 import (
 	"fmt"
 	"net"
+
+	"github.com/pkg/errors"
 )
 
 // Record holds a single DNS record.
@@ -23,7 +25,7 @@ func (r *Record) Validate(typ Type) error {
 	if typ == A {
 		ip := net.ParseIP(r.Address)
 		if ip == nil || ip.To4() == nil {
-			return fmt.Errorf("invalid IPv4 address")
+			return errors.Errorf("invalid IPv4 address: %s", r.Address)
 		}
 	}
 
@@ -31,26 +33,26 @@ func (r *Record) Validate(typ Type) error {
 	if typ == AAAA {
 		ip := net.ParseIP(r.Address)
 		if ip == nil || ip.To16() == nil {
-			return fmt.Errorf("invalid IPv6 address")
+			return errors.Errorf("invalid IPv6 address: %s", r.Address)
 		}
 	}
 
 	// validate CNAME and MX addresses
 	if typ == CNAME || typ == MX {
 		if !IsDomain(r.Address, true) {
-			return fmt.Errorf("invalid domain address")
+			return errors.Errorf("invalid domain name: %s", r.Address)
 		}
 	}
 
 	// check TXT data
 	if typ == TXT {
 		if len(r.Data) == 0 {
-			return fmt.Errorf("missing data")
+			return errors.Errorf("missing data")
 		}
 
 		for _, data := range r.Data {
 			if len(data) > 255 {
-				return fmt.Errorf("data too long")
+				return errors.Errorf("data too long")
 			}
 		}
 	}

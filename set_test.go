@@ -12,20 +12,22 @@ func TestSet(t *testing.T) {
 		err string
 	}{
 		{
-			set: Set{},
-			err: "invalid name",
+			set: Set{
+				Name: "foo",
+			},
+			err: "invalid name: foo",
 		},
 		{
 			set: Set{
 				Name: "hello.com.",
 			},
-			err: "name does not belong to zone",
+			err: "name does not belong to zone: hello.com.",
 		},
 		{
 			set: Set{
 				Name: "example.com.",
 			},
-			err: "invalid type",
+			err: "invalid type: 0",
 		},
 		{
 			set: Set{
@@ -36,25 +38,32 @@ func TestSet(t *testing.T) {
 		},
 		{
 			set: Set{
-				Name:    "example.com.",
-				Type:    A,
-				Records: []Record{{}},
+				Name: "example.com.",
+				Type: A,
+				Records: []Record{
+					{Address: "foo"},
+				},
 			},
-			err: "invalid IPv4 address",
+			err: "invalid record: invalid IPv4 address: foo",
 		},
 		{
 			set: Set{
-				Name:    "example.com.",
-				Type:    TXT,
-				Records: []Record{{}},
+				Name: "example.com.",
+				Type: TXT,
+				Records: []Record{
+					{},
+				},
 			},
-			err: "missing data",
+			err: "invalid record: missing data",
 		},
 		{
 			set: Set{
-				Name:    "example.com.",
-				Type:    CNAME,
-				Records: []Record{{}, {}},
+				Name: "example.com.",
+				Type: CNAME,
+				Records: []Record{
+					{},
+					{},
+				},
 			},
 			err: "multiple CNAME records",
 		},
