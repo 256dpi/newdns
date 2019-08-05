@@ -169,6 +169,21 @@ func TestServer(t *testing.T) {
 				}, nil
 			}
 
+			// handle multimail
+			if name == "multimail" {
+				return []Set{
+					{
+						Name: "multimail.newdns.256dpi.com.",
+						Type: TypeMX,
+						Records: []Record{
+							{Address: "mail1.example.com.", Priority: 1},
+							{Address: "mail2.example.com.", Priority: 10},
+							{Address: "mail3.example.com.", Priority: 10},
+						},
+					},
+				}, nil
+			}
+
 			// handle text
 			if name == "text" {
 				return []Set{
@@ -612,6 +627,56 @@ func conformanceTests(t *testing.T, proto, addr string) {
 					},
 					Mx:         "mail.example.com.",
 					Preference: 7,
+				},
+			},
+			Ns: nsRRs,
+		}, ret)
+	})
+
+	t.Run("SubMultiMX", func(t *testing.T) {
+		ret, err := query(proto, addr, "multimail.newdns.256dpi.com.", "MX", nil)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "multimail.newdns.256dpi.com.", Qtype: dns.TypeMX, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.MX{
+					Hdr: dns.RR_Header{
+						Name:     "multimail.newdns.256dpi.com.",
+						Rrtype:   dns.TypeMX,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 18,
+					},
+					Mx:         "mail1.example.com.",
+					Preference: 1,
+				},
+				&dns.MX{
+					Hdr: dns.RR_Header{
+						Name:     "multimail.newdns.256dpi.com.",
+						Rrtype:   dns.TypeMX,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 10,
+					},
+					Mx:         "mail2.example.com.",
+					Preference: 10,
+				},
+				&dns.MX{
+					Hdr: dns.RR_Header{
+						Name:     "multimail.newdns.256dpi.com.",
+						Rrtype:   dns.TypeMX,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 10,
+					},
+					Mx:         "mail3.example.com.",
+					Preference: 10,
 				},
 			},
 			Ns: nsRRs,
