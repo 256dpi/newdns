@@ -183,9 +183,14 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 		// validate sets
 		for _, set := range sets {
 			// validate set
-			err = set.Validate(z.Name)
+			err = set.Validate()
 			if err != nil {
 				return nil, false, errors.Wrap(err, "invalid set")
+			}
+
+			// check relationship
+			if !InZone(z.Name, set.Name) {
+				return nil, false, errors.Errorf("set does not belong to zone: %s", set.Name)
 			}
 
 			// increment counter

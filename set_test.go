@@ -19,12 +19,6 @@ func TestSetValidate(t *testing.T) {
 		},
 		{
 			set: Set{
-				Name: "hello.com.",
-			},
-			err: "name does not belong to zone: hello.com.",
-		},
-		{
-			set: Set{
 				Name: "example.com.",
 			},
 			err: "invalid type: 0",
@@ -70,7 +64,7 @@ func TestSetValidate(t *testing.T) {
 	}
 
 	for i, item := range table {
-		err := item.set.Validate("example.com.")
+		err := item.set.Validate()
 		if err != nil {
 			assert.Equal(t, item.err, err.Error(), i)
 		} else {

@@ -111,9 +111,15 @@ func TestZoneLookup(t *testing.T) {
 				return nil, io.EOF
 			}
 
-			if name == "invalid" {
+			if name == "invalid1" {
 				return []Set{
 					{Name: "foo"},
+				}, nil
+			}
+
+			if name == "invalid2" {
+				return []Set{
+					{Name: "foo.", Type: A, Records: []Record{{Address: "1.2.3.4"}}},
 				}, nil
 			}
 
@@ -154,8 +160,13 @@ func TestZoneLookup(t *testing.T) {
 	assert.False(t, exists)
 	assert.Nil(t, res)
 
-	res, exists, err = zone.Lookup("invalid.example.com.", A)
+	res, exists, err = zone.Lookup("invalid1.example.com.", A)
 	assert.Equal(t, "invalid set: invalid name: foo", err.Error())
+	assert.False(t, exists)
+	assert.Nil(t, res)
+
+	res, exists, err = zone.Lookup("invalid2.example.com.", A)
+	assert.Equal(t, "set does not belong to zone: foo.", err.Error())
 	assert.False(t, exists)
 	assert.Nil(t, res)
 

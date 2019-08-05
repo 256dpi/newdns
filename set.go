@@ -25,15 +25,10 @@ type Set struct {
 }
 
 // Validate will validate the set and ensure defaults.
-func (s *Set) Validate(zone string) error {
+func (s *Set) Validate() error {
 	// check name
 	if !IsDomain(s.Name, true) {
 		return errors.Errorf("invalid name: %s", s.Name)
-	}
-
-	// check relationship
-	if !InZone(zone, s.Name) {
-		return errors.Errorf("name does not belong to zone: %s", s.Name)
 	}
 
 	// check type
