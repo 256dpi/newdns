@@ -151,6 +151,11 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 	// enforce lowercase name
 	name = strings.ToLower(name)
 
+	// check name
+	if !InZone(z.Name, name) {
+		return nil, false, errors.Errorf("name does not belong to zone: %s", name)
+	}
+
 	// prepare result
 	var result []Set
 
@@ -158,7 +163,7 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 		// get sets
 		sets, err := z.Handler(TrimZone(z.Name, name))
 		if err != nil {
-			return nil, false, err
+			return nil, false, errors.Wrap(err, "handler error")
 		}
 
 		// return immediately if initial set is empty
@@ -180,7 +185,7 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 			// validate set
 			err = set.Validate(z.Name)
 			if err != nil {
-				return nil, false, err
+				return nil, false, errors.Wrap(err, "invalid set")
 			}
 
 			// increment counter
@@ -190,18 +195,18 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 		// check counters
 		for _, counter := range counters {
 			if counter > 1 {
-				return nil, false, errors.Errorf("multiple sets for same type")
+				return nil, false, errors.New("multiple sets for same type")
 			}
 		}
 
 		// check apex CNAME
 		if counters[CNAME] > 0 && name == z.Name {
-			return nil, false, errors.Errorf("invalid CNAME at apex")
+			return nil, false, errors.Errorf("invalid CNAME set at apex: %s", name)
 		}
 
 		// check CNAME is stand-alone
 		if counters[CNAME] > 0 && (len(sets) > 1) {
-			return nil, false, errors.Errorf("a CNAME set must be stand-alone")
+			return nil, false, errors.Errorf("other sets with CNAME set: %s", name)
 		}
 
 		// check if CNAME and query is not CNAME

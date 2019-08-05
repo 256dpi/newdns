@@ -1,6 +1,7 @@
 package newdns
 
 import (
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -95,4 +96,81 @@ func TestZoneValidate(t *testing.T) {
 			assert.Equal(t, item.err, "", item)
 		}
 	}
+}
+
+func TestZoneLookup(t *testing.T) {
+	zone := Zone{
+		Name:             "example.com.",
+		MasterNameServer: "ns1.example.com.",
+		AllNameServers: []string{
+			"ns1.example.com.",
+			"ns2.example.com.",
+		},
+		Handler: func(name string) ([]Set, error) {
+			if name == "error" {
+				return nil, io.EOF
+			}
+
+			if name == "invalid" {
+				return []Set{
+					{Name: "foo"},
+				}, nil
+			}
+
+			if name == "multiple" {
+				return []Set{
+					{Name: "foo.example.com.", Type: A, Records: []Record{{Address: "1.2.3.4"}}},
+					{Name: "foo.example.com.", Type: A, Records: []Record{{Address: "1.2.3.4"}}},
+				}, nil
+			}
+
+			if name == "" {
+				return []Set{
+					{Name: "example.com.", Type: CNAME, Records: []Record{{Address: "cool.com."}}},
+				}, nil
+			}
+
+			if name == "cname" {
+				return []Set{
+					{Name: "cname.example.com.", Type: A, Records: []Record{{Address: "1.2.3.4"}}},
+					{Name: "cname.example.com.", Type: CNAME, Records: []Record{{Address: "cool.com."}}},
+				}, nil
+			}
+
+			return nil, nil
+		},
+	}
+
+	err := zone.Validate()
+	assert.NoError(t, err)
+
+	res, exists, err := zone.Lookup("foo", A)
+	assert.Equal(t, "name does not belong to zone: foo", err.Error())
+	assert.False(t, exists)
+	assert.Nil(t, res)
+
+	res, exists, err = zone.Lookup("error.example.com.", A)
+	assert.Equal(t, "handler error: EOF", err.Error())
+	assert.False(t, exists)
+	assert.Nil(t, res)
+
+	res, exists, err = zone.Lookup("invalid.example.com.", A)
+	assert.Equal(t, "invalid set: invalid name: foo", err.Error())
+	assert.False(t, exists)
+	assert.Nil(t, res)
+
+	res, exists, err = zone.Lookup("multiple.example.com.", A)
+	assert.Equal(t, "multiple sets for same type", err.Error())
+	assert.False(t, exists)
+	assert.Nil(t, res)
+
+	res, exists, err = zone.Lookup("example.com.", A)
+	assert.Equal(t, "invalid CNAME set at apex: example.com.", err.Error())
+	assert.False(t, exists)
+	assert.Nil(t, res)
+
+	res, exists, err = zone.Lookup("cname.example.com.", A)
+	assert.Equal(t, "other sets with CNAME set: cname.example.com.", err.Error())
+	assert.False(t, exists)
+	assert.Nil(t, res)
 }
