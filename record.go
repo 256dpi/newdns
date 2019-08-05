@@ -58,16 +58,15 @@ func (r *Record) Validate(typ Type) error {
 	return nil
 }
 
-func (r *Record) sortKey() string {
-	// return address if set
-	if r.Address != "" {
+func (r *Record) sortKey(typ Type) string {
+	switch typ {
+	case TypeA, TypeAAAA, TypeCNAME:
 		return r.Address
-	}
-
-	// return firs txt data
-	if len(r.Data) > 0 {
+	case TypeMX:
+		return fmt.Sprintf("%020d %s", r.Priority, r.Address)
+	case TypeTXT:
 		return r.Data[0]
+	default:
+		return ""
 	}
-
-	return ""
 }

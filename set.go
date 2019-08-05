@@ -60,7 +60,7 @@ func (s *Set) Validate(zone string) error {
 
 	// sort records
 	sort.Slice(s.Records, func(i, j int) bool {
-		return s.Records[i].sortKey() < s.Records[j].sortKey()
+		return s.Records[i].sortKey(s.Type) < s.Records[j].sortKey(s.Type)
 	})
 
 	// set default ttl
