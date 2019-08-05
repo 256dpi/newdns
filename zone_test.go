@@ -156,7 +156,11 @@ func TestZoneLookup(t *testing.T) {
 	}{
 		{
 			name: "foo",
-			err:  "name does not belong to zone: foo",
+			err:  "invalid name: foo",
+		},
+		{
+			name: "foo.",
+			err:  "name does not belong to zone: foo.",
 		},
 		{
 			name: "error.example.com.",

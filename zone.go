@@ -148,6 +148,11 @@ func (z *Zone) Validate() error {
 // specified record types. If no results are returned, the second return value
 // indicates if there are other results for the specified name.
 func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
+	// check name
+	if !IsDomain(name, true) {
+		return nil, false, errors.Errorf("invalid name: %s", name)
+	}
+
 	// enforce lowercase name
 	name = strings.ToLower(name)
 
