@@ -7,6 +7,11 @@ import (
 	"github.com/miekg/dns"
 )
 
+type result struct {
+	name string
+	set  Set
+}
+
 // Config provides configuration for a DNS server.
 type Config struct {
 	// The buffer size used if EDNS is enabled by a client.
@@ -193,7 +198,9 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	}
 
 	// set answer
-	rs.Answer = result.convert(zone, transferCase(question.Name, name))
+	for _, res := range result {
+		rs.Answer = append(rs.Answer, res.set.convert(zone, transferCase(question.Name, res.name))...)
+	}
 
 	// check answers
 	for _, answer := range rs.Answer {
@@ -207,7 +214,9 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 				}
 
 				// add results to extra
-				rs.Extra = result.convert(zone, transferCase(question.Name, record.Mx))
+				for _, res := range result {
+					rs.Extra = append(rs.Extra, res.set.convert(zone, transferCase(question.Name, res.name))...)
+				}
 			}
 		}
 	}
@@ -229,9 +238,9 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	s.writeMessage(w, rq, rs)
 }
 
-func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name string, needle ...Type) (*Set, bool) {
-	// prepare answer
-	var answer *Set
+func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name string, needle ...Type) ([]result, bool) {
+	// prepare result
+	var res []result
 
 	// retrieve sets for zone
 	for i := 0; ; i++ {
@@ -297,8 +306,11 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 
 		// check if CNAME and query is not CNAME
 		if counters[TypeCNAME] > 0 && !typeInList(needle, TypeCNAME) {
-			// add CNAME set to answer
-			answer = &sets[0]
+			// add CNAME set to result
+			res = append(res, result{
+				name: name,
+				set:  sets[0],
+			})
 
 			// continue with CNAME address if address is in zone
 			if InZone(zone.Name, sets[0].Records[0].Address) {
@@ -314,14 +326,17 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 		for _, set := range sets {
 			if typeInList(needle, set.Type) {
 				// add records
-				answer = &set
+				res = append(res, result{
+					name: name,
+					set:  set,
+				})
 
 				break
 			}
 		}
 
 		// write SOA with success code to indicate availability of other sets
-		if answer == nil {
+		if res == nil {
 			s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeSuccess)
 			return nil, true
 		}
@@ -329,7 +344,7 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 		break
 	}
 
-	return answer, false
+	return res, false
 }
 
 func (s *Server) writeSOAResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone) {

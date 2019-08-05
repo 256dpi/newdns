@@ -59,11 +59,6 @@ func durationToTime(d time.Duration) uint32 {
 	return uint32(math.Ceil(d.Seconds()))
 }
 
-// RQ IP4.NEWDNS.256dpi.com
-//
-// RS [newdns].256dpi.com (4)
-// RS [ip4.newdns.256dpi].com (0)
-
 func transferCase(source, destination string) string {
 	// get lower variants
 	lowSource := strings.ToLower(source)
