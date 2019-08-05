@@ -29,7 +29,7 @@ func (r *Record) Validate(typ Type) error {
 		}
 	}
 
-	// validate  AAAA address
+	// validate AAAA address
 	if typ == TypeAAAA {
 		ip := net.ParseIP(r.Address)
 		if ip == nil || ip.To16() == nil {
@@ -45,8 +45,16 @@ func (r *Record) Validate(typ Type) error {
 	}
 
 	// check txt data
-	if typ == TypeTXT && len(r.Data) == 0 {
-		return fmt.Errorf("missing data")
+	if typ == TypeTXT {
+		if len(r.Data) == 0 {
+			return fmt.Errorf("missing data")
+		}
+
+		for _, data := range r.Data {
+			if len(data) > 255 {
+				return fmt.Errorf("data too long")
+			}
+		}
 	}
 
 	return nil

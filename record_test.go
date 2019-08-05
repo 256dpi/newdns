@@ -11,7 +11,7 @@ func TestRecord(t *testing.T) {
 		typ Type
 		rec Record
 		err string
-	} {
+	}{
 		{
 			typ: TypeA,
 			rec: Record{Address: ""},
@@ -62,6 +62,11 @@ func TestRecord(t *testing.T) {
 			typ: TypeTXT,
 			rec: Record{Data: nil},
 			err: "missing data",
+		},
+		{
+			typ: TypeTXT,
+			rec: Record{Data: []string{"z4e6ycRMp6MP3WvWQMxIAOXglxANbj3oB0xD8BffktO4eo3VCR0s6TyGHKixvarOFJU0fqNkXeFOeI7sTXH5X0iXZukfLgnGTxLXNC7KkVFwtVFsh1P0IUNXtNBlOVWrVbxkS62ezbLpENNkiBwbkCvcTjwF2kyI0curAt9JhhJFb3AAq0q1iHWlJLn1KSrev9PIsY3alndDKjYTPxAojxzGKdK3A7rWLJ8Uzb3Z5OhLwP7jTKqbWVUocJRFLYpL"}},
+			err: "data too long",
 		},
 		{
 			typ: TypeTXT,
