@@ -2,6 +2,7 @@ package newdns
 
 import (
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -211,7 +212,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 	// set answer
 	for _, res := range result {
-		rs.Answer = append(rs.Answer, res.Set.convert(zone, transferCase(question.Name, res.Name))...)
+		rs.Answer = append(rs.Answer, s.convert(question.Name, zone, res)...)
 	}
 
 	// check answers
@@ -229,7 +230,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 				// add results to extra
 				for _, res := range result {
-					rs.Extra = append(rs.Extra, res.Set.convert(zone, transferCase(question.Name, res.Name))...)
+					rs.Extra = append(rs.Extra, s.convert(question.Name, zone, res)...)
 				}
 			}
 		}
@@ -368,4 +369,52 @@ func (s *Server) reportError(r *dns.Msg, msg string) {
 	if s.config.Reporter != nil {
 		s.config.Reporter(fmt.Errorf("%s: %+v", msg, r))
 	}
+}
+
+func (s *Server) convert(query string, zone *Zone, result Result) []dns.RR {
+	// prepare header
+	header := dns.RR_Header{
+		Name:   transferCase(query, result.Name),
+		Rrtype: uint16(result.Set.Type),
+		Class:  dns.ClassINET,
+		Ttl:    durationToTime(zone.minTTL(result.Set.TTL)),
+	}
+
+	// prepare list
+	var list []dns.RR
+
+	// add records
+	for _, record := range result.Set.Records {
+		// construct record
+		switch result.Set.Type {
+		case TypeA:
+			list = append(list, &dns.A{
+				Hdr: header,
+				A:   net.ParseIP(record.Address),
+			})
+		case TypeAAAA:
+			list = append(list, &dns.AAAA{
+				Hdr:  header,
+				AAAA: net.ParseIP(record.Address),
+			})
+		case TypeCNAME:
+			list = append(list, &dns.CNAME{
+				Hdr:    header,
+				Target: dns.Fqdn(record.Address),
+			})
+		case TypeMX:
+			list = append(list, &dns.MX{
+				Hdr:        header,
+				Preference: uint16(record.Priority),
+				Mx:         dns.Fqdn(record.Address),
+			})
+		case TypeTXT:
+			list = append(list, &dns.TXT{
+				Hdr: header,
+				Txt: record.Data,
+			})
+		}
+	}
+
+	return list
 }

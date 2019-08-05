@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"sort"
 	"time"
-
-	"github.com/miekg/dns"
 )
 
 // Set is a set of records.
@@ -58,16 +56,4 @@ func (s *Set) Validate() error {
 	}
 
 	return nil
-}
-
-func (s *Set) convert(zone *Zone, name string) []dns.RR {
-	// prepare list
-	var list []dns.RR
-
-	// add records
-	for _, record := range s.Records {
-		list = append(list, record.convert(zone, s, name))
-	}
-
-	return list
 }
