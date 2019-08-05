@@ -1139,6 +1139,72 @@ func conformanceTests(t *testing.T, proto, addr string) {
 		}, ret)
 	})
 
+	t.Run("EDNSLongResponse", func(t *testing.T) {
+		ret, err := query(proto, addr, "long.newdns.256dpi.com.", "TXT", func(msg *dns.Msg) {
+			msg.SetEdns0(1337, false)
+		})
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "long.newdns.256dpi.com.", Qtype: dns.TypeTXT, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.TXT{
+					Hdr: dns.RR_Header{
+						Name:     "long.newdns.256dpi.com.",
+						Rrtype:   dns.TypeTXT,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 256,
+					},
+					Txt: []string{
+						"gyK4oL9X8Zn3b6TwmUIYAgQx43rBOWMqJWR3wGMGNaZgajnhd2u9JaIbGwNo6gzZunyKYRxID3mKLmYUCcIrNYuo8R4UkijZeshwqEAM2EWnjNsB1hJHOlu6VyRKW13rsFUJedOSqc7YjjUoxm9c3mF28tEXmc3GVsC476wJ2ciSbp7ujDjQ032SQRD6kpayzFX8GncS5KXP8mLK2ZIqK2U4fUmYEpTPQMmp7w24GKkfGJzE4JfMBxSybDUScLq",
+					},
+				},
+				&dns.TXT{
+					Hdr: dns.RR_Header{
+						Name:     "long.newdns.256dpi.com.",
+						Rrtype:   dns.TypeTXT,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 256,
+					},
+					Txt: []string{
+						"upNh05zi9flqN2puI9eIGgAgl3gwc65l3WjFdnE3u55dhyUyIoKbOlc1mQJPULPkn1V5TTG9rLBB8AzNfeL8jvwO8h0mzmJhPH8n6dkgI546jB8Z0g0MRJxN5VNSixjFjdR8vtUp6EWlVi7QSe9SYInghV0M17zZ8mXSHwTfYZaPH54ng22mSWzVbRX2tlUPLTNRB5CHrEtxliyhhQlRey98P5G0eo35FUXdqzOSJ3HGqDssBWQAxK3I9feOjbE",
+					},
+				},
+				&dns.TXT{
+					Hdr: dns.RR_Header{
+						Name:     "long.newdns.256dpi.com.",
+						Rrtype:   dns.TypeTXT,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 256,
+					},
+					Txt: []string{
+						"z4e6ycRMp6MP3WvWQMxIAOXglxANbj3oB0xD8BffktO4eo3VCR0s6TyGHKixvarOFJU0fqNkXeFOeI7sTXH5X0iXZukfLgnGTxLXNC7KkVFwtVFsh1P0IUNXtNBlOVWrVbxkS62ezbLpENNkiBwbkCvcTjwF2kyI0curAt9JhhJFb3AAq0q1iHWlJLn1KSrev9PIsY3alndDKjYTPxAojxzGKdK3A7rWLJ8Uzb3Z5OhLwP7jTKqbWVUocJRFLYp",
+					},
+				},
+			},
+			Ns: nsRRs,
+			Extra: []dns.RR{
+				&dns.OPT{
+					Hdr: dns.RR_Header{
+						Name:     ".",
+						Rrtype:   dns.TypeOPT,
+						Class:    4096,
+						Ttl:      0,
+						Rdlength: 0,
+					},
+				},
+			},
+		}, ret)
+	})
+
 	t.Run("RecursionDesired", func(t *testing.T) {
 		ret, err := query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.RecursionDesired = true
