@@ -192,8 +192,23 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	}
 
 	// lookup main record
-	result, handled := s.lookup(w, rq, rs, zone, name, typ)
+	result, avl, handled := s.lookup(w, rq, rs, zone, name, typ)
 	if handled {
+		return
+	}
+
+	// check result
+	if len(result) == 0 {
+		// write SOA with success code to indicate availability of other sets
+		// if sets are available
+		if avl {
+			s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeSuccess)
+			return
+		}
+
+		// otherwise return name error
+		s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeNameError)
+
 		return
 	}
 
@@ -208,7 +223,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 		case *dns.MX:
 			// lookup internal MX target A and AAAA records
 			if InZone(zone.Name, record.Mx) {
-				result, handled := s.lookup(w, rq, rs, zone, record.Mx, TypeA, TypeAAAA)
+				result, _, handled := s.lookup(w, rq, rs, zone, record.Mx, TypeA, TypeAAAA)
 				if handled {
 					return
 				}
@@ -238,7 +253,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	s.writeMessage(w, rq, rs)
 }
 
-func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name string, needle ...Type) ([]result, bool) {
+func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name string, needle ...Type) ([]result, bool, bool) {
 	// prepare result
 	var res []result
 
@@ -249,13 +264,12 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 		if err != nil {
 			s.writeError(w, rs, dns.RcodeServerFailure)
 			s.reportError(rq, err.Error())
-			return nil, true
+			return nil, false, true
 		}
 
-		// return error if initial set is empty
+		// return if initial set is empty
 		if i == 0 && len(sets) == 0 {
-			s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeNameError)
-			return nil, true
+			return nil, false, false
 		}
 
 		// prepare counters
@@ -274,7 +288,7 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 			if err != nil {
 				s.writeError(w, rs, dns.RcodeServerFailure)
 				s.reportError(rq, err.Error())
-				return nil, true
+				return nil, false, true
 			}
 
 			// increment counter
@@ -286,7 +300,7 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 			if counter > 1 {
 				s.writeError(w, rs, dns.RcodeServerFailure)
 				s.reportError(rq, "multiple sets for same type")
-				return nil, true
+				return nil, false, true
 			}
 		}
 
@@ -294,14 +308,14 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 		if counters[TypeCNAME] > 0 && name == zone.Name {
 			s.writeError(w, rs, dns.RcodeServerFailure)
 			s.reportError(rq, "invalid CNAME at apex")
-			return nil, true
+			return nil, false, true
 		}
 
 		// check CNAME is stand-alone
 		if counters[TypeCNAME] > 0 && (len(sets) > 1) {
 			s.writeError(w, rs, dns.RcodeServerFailure)
 			s.reportError(rq, "a CNAME set must be stand-alone")
-			return nil, true
+			return nil, false, true
 		}
 
 		// check if CNAME and query is not CNAME
@@ -318,8 +332,7 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 				continue
 			}
 
-			// otherwise break
-			break
+			return res, false, false
 		}
 
 		// add matching set
@@ -335,16 +348,14 @@ func (s *Server) lookup(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, name 
 			}
 		}
 
-		// write SOA with success code to indicate availability of other sets
-		if res == nil {
-			s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeSuccess)
-			return nil, true
+		// return if there are not matches, but indicate that there are sets
+		// available for other types
+		if len(res) == 0 {
+			return nil, true, false
 		}
 
-		break
+		return res, false, false
 	}
-
-	return res, false
 }
 
 func (s *Server) writeSOAResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone) {
