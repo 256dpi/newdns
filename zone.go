@@ -73,10 +73,15 @@ func (z *Zone) Validate() error {
 		return fmt.Errorf("master server not full qualified")
 	}
 
+	// check name server count
+	if len(z.AllNameServers) < 1 {
+		return fmt.Errorf("missing name server")
+	}
+
 	// check name servers
 	for _, ns := range z.AllNameServers {
 		if !IsDomain(ns, true) {
-			return fmt.Errorf("additional name server not fully qualified")
+			return fmt.Errorf("name server not fully qualified")
 		}
 	}
 
@@ -99,7 +104,7 @@ func (z *Zone) Validate() error {
 	}
 
 	// set default retry
-	if z.Refresh == 0 {
+	if z.Retry == 0 {
 		z.Retry = time.Hour
 	}
 
