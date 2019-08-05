@@ -250,12 +250,3 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 		return result, false, nil
 	}
 }
-
-func (z *Zone) minTTL(ttl time.Duration) time.Duration {
-	// return zone min ttl if to less
-	if ttl < z.MinTTL {
-		return z.MinTTL
-	}
-
-	return ttl
-}

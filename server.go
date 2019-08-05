@@ -375,7 +375,12 @@ func (s *Server) convert(query string, zone *Zone, set Set) []dns.RR {
 		Name:   transferCase(query, set.Name),
 		Rrtype: uint16(set.Type),
 		Class:  dns.ClassINET,
-		Ttl:    durationToTime(zone.minTTL(set.TTL)),
+		Ttl:    durationToTime(set.TTL),
+	}
+
+	// ensure zone min TTL
+	if set.TTL < zone.MinTTL {
+		header.Ttl = durationToTime(zone.MinTTL)
 	}
 
 	// prepare list
