@@ -120,7 +120,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 		// check version
 		if rq.IsEdns0().Version() != 0 {
-			s.writeError(w, rs, dns.RcodeBadVers)
+			s.writeError(w, rq, rs, nil, dns.RcodeBadVers)
 			return
 		}
 	}
@@ -136,7 +136,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 	// check any type
 	if question.Qtype == dns.TypeANY {
-		s.writeError(w, rs, dns.RcodeNotImplemented)
+		s.writeError(w, rq, rs, nil, dns.RcodeNotImplemented)
 		return
 	}
 
@@ -146,7 +146,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	// get zone
 	zone, err := s.config.Handler(name)
 	if err != nil {
-		s.writeError(w, rs, dns.RcodeServerFailure)
+		s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
 		s.reportError(rq, err.Error())
 		return
 	}
@@ -154,14 +154,14 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	// check zone
 	if zone == nil {
 		rs.Authoritative = false
-		s.writeError(w, rs, dns.RcodeRefused)
+		s.writeError(w, rq, rs, nil, dns.RcodeRefused)
 		return
 	}
 
 	// validate zone
 	err = zone.Validate()
 	if err != nil {
-		s.writeError(w, rs, dns.RcodeServerFailure)
+		s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
 		s.reportError(rq, err.Error())
 		return
 	}
@@ -183,29 +183,28 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 
 	// return error if type is not supported
 	if !typ.valid() {
-		s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeNameError)
+		s.writeError(w, rq, rs, zone, dns.RcodeNameError)
 		return
 	}
 
-	// lookup main record
-	result, avl, err := zone.Lookup(name, typ)
+	// lookup main result
+	result, exists, err := zone.Lookup(name, typ)
 	if err != nil {
-		s.writeError(w, rs, dns.RcodeServerFailure)
+		s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
 		s.reportError(rq, err.Error())
 		return
 	}
 
 	// check result
 	if len(result) == 0 {
-		// write SOA with success code to indicate availability of other sets
-		// if sets are available
-		if avl {
-			s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeSuccess)
+		// write SOA with success code to indicate existence of other sets
+		if exists {
+			s.writeError(w, rq, rs, zone, dns.RcodeSuccess)
 			return
 		}
 
 		// otherwise return name error
-		s.writeErrorWithSOA(w, rq, rs, zone, dns.RcodeNameError)
+		s.writeError(w, rq, rs, zone, dns.RcodeNameError)
 
 		return
 	}
@@ -223,7 +222,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 			if InZone(zone.Name, record.Mx) {
 				result, _, err = zone.Lookup(record.Mx, A, AAAA)
 				if err != nil {
-					s.writeError(w, rs, dns.RcodeServerFailure)
+					s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
 					s.reportError(rq, err.Error())
 					return
 				}
@@ -306,26 +305,28 @@ func (s *Server) writeNSResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zo
 	s.writeMessage(w, rq, rs)
 }
 
-func (s *Server) writeErrorWithSOA(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, code int) {
+func (s *Server) writeError(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, code int) {
 	// set code
 	rs.Rcode = code
 
 	// add soa record
-	rs.Ns = append(rs.Ns, &dns.SOA{
-		Hdr: dns.RR_Header{
-			Name:   zone.Name,
-			Rrtype: dns.TypeSOA,
-			Class:  dns.ClassINET,
-			Ttl:    durationToTime(zone.SOATTL),
-		},
-		Ns:      zone.MasterNameServer,
-		Mbox:    emailToDomain(zone.AdminEmail),
-		Serial:  1,
-		Refresh: durationToTime(zone.Refresh),
-		Retry:   durationToTime(zone.Retry),
-		Expire:  durationToTime(zone.Expire),
-		Minttl:  durationToTime(zone.MinTTL),
-	})
+	if zone != nil {
+		rs.Ns = append(rs.Ns, &dns.SOA{
+			Hdr: dns.RR_Header{
+				Name:   zone.Name,
+				Rrtype: dns.TypeSOA,
+				Class:  dns.ClassINET,
+				Ttl:    durationToTime(zone.SOATTL),
+			},
+			Ns:      zone.MasterNameServer,
+			Mbox:    emailToDomain(zone.AdminEmail),
+			Serial:  1,
+			Refresh: durationToTime(zone.Refresh),
+			Retry:   durationToTime(zone.Retry),
+			Expire:  durationToTime(zone.Expire),
+			Minttl:  durationToTime(zone.MinTTL),
+		})
+	}
 
 	// write message
 	s.writeMessage(w, rq, rs)
@@ -347,22 +348,19 @@ func (s *Server) writeMessage(w dns.ResponseWriter, rq, rs *dns.Msg) {
 		rs.Answer = nil
 		rs.Ns = nil
 		rs.Extra = nil
-		s.writeError(w, rs, dns.RcodeSuccess)
+		rs.Rcode = dns.RcodeSuccess
+		_ = w.WriteMsg(rs)
+		_ = w.Close()
 		return
 	}
 
+	// write message
 	err := w.WriteMsg(rs)
 	if err != nil {
 		_ = w.Close()
 		s.reportError(rq, err.Error())
 		return
 	}
-}
-
-func (s *Server) writeError(w dns.ResponseWriter, rs *dns.Msg, code int) {
-	rs.Rcode = code
-	_ = w.WriteMsg(rs)
-	_ = w.Close()
 }
 
 func (s *Server) reportError(r *dns.Msg, msg string) {
