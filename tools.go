@@ -48,6 +48,43 @@ func TrimZone(zone, name string) string {
 	return newName
 }
 
+// NormalizeDomain will normalize the provided domain name.
+func NormalizeDomain(name string, lower, fqdn bool) string {
+	// remove spaces
+	name = strings.TrimSpace(name)
+
+	// lowercase if requested
+	if lower {
+		name = strings.ToLower(name)
+	}
+
+	// ensure FQDN if requested
+	if fqdn {
+		name = dns.Fqdn(name)
+	}
+
+	return name
+}
+
+// TransferCase will transfer the case from the source name to the destination.
+// For for the source "foo.AAA.com." and destination "aaa.com" the function
+// will return "AAA.com". The source must be either a child or the same as the
+// destination.
+func TransferCase(source, destination string) string {
+	// get lower variants
+	lowSource := strings.ToLower(source)
+	lowDestination := strings.ToLower(destination)
+
+	// get index of destination in source
+	index := strings.Index(lowSource, lowDestination)
+	if index < 0 {
+		return destination
+	}
+
+	// take shared part from source
+	return source[index:]
+}
+
 // Query can be used to query a DNS server over the provided protocol on its
 // address fot the specified name and type. The supplied function can be set to
 // mutate the sent request.
@@ -100,19 +137,4 @@ func emailToDomain(email string) string {
 
 func durationToTime(d time.Duration) uint32 {
 	return uint32(math.Ceil(d.Seconds()))
-}
-
-func transferCase(source, destination string) string {
-	// get lower variants
-	lowSource := strings.ToLower(source)
-	lowDestination := strings.ToLower(destination)
-
-	// get index of destination in source
-	index := strings.Index(lowSource, lowDestination)
-	if index < 0 {
-		return destination
-	}
-
-	// take shared part from source
-	return source[index:]
 }

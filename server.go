@@ -206,7 +206,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	}
 
 	// get name
-	name := strings.ToLower(dns.Name(question.Name).String())
+	name := strings.ToLower(question.Name)
 
 	// get zone
 	zone, err := s.config.Handler(name)
@@ -315,7 +315,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	for _, ns := range zone.AllNameServers {
 		rs.Ns = append(rs.Ns, &dns.NS{
 			Hdr: dns.RR_Header{
-				Name:   transferCase(question.Name, zone.Name),
+				Name:   TransferCase(question.Name, zone.Name),
 				Rrtype: dns.TypeNS,
 				Class:  dns.ClassINET,
 				Ttl:    durationToTime(zone.NSTTL),
@@ -447,7 +447,7 @@ func (s *Server) log(e Event, msg *dns.Msg, err error, reason string, args ...in
 func (s *Server) convert(query string, zone *Zone, set Set) []dns.RR {
 	// prepare header
 	header := dns.RR_Header{
-		Name:   transferCase(query, set.Name),
+		Name:   TransferCase(query, set.Name),
 		Rrtype: uint16(set.Type),
 		Class:  dns.ClassINET,
 		Ttl:    durationToTime(set.TTL),

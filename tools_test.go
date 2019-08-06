@@ -10,6 +10,8 @@ func TestIsDomain(t *testing.T) {
 	assert.True(t, IsDomain("example.com", false))
 	assert.False(t, IsDomain("example.com", true))
 	assert.True(t, IsDomain("example.com.", true))
+	assert.True(t, IsDomain(" example.com.", true))
+	assert.True(t, IsDomain("example.com. ", true))
 	assert.False(t, IsDomain("", false))
 	assert.True(t, IsDomain("x", false))
 	assert.True(t, IsDomain(".", false))
@@ -31,6 +33,15 @@ func TestTrimZone(t *testing.T) {
 	assert.Equal(t, "foo", TrimZone("example.com", "foo.example.com"))
 	assert.Equal(t, "", TrimZone("example.com", "example.com"))
 	assert.Equal(t, "example.com", TrimZone("foo.example.com", "example.com"))
+}
+
+func TestNormalizeDomain(t *testing.T) {
+	assert.Equal(t, "", NormalizeDomain("", false, false))
+	assert.Equal(t, ".", NormalizeDomain("", false, true))
+	assert.Equal(t, "foo", NormalizeDomain(" foo", false, false))
+	assert.Equal(t, "foo", NormalizeDomain("foo ", false, false))
+	assert.Equal(t, "foo", NormalizeDomain(" fOO ", true, false))
+	assert.Equal(t, "foo.", NormalizeDomain(" fOO ", true, true))
 }
 
 func TestTransferCase(t *testing.T) {
@@ -67,6 +78,6 @@ func TestTransferCase(t *testing.T) {
 	}
 
 	for i, item := range table {
-		assert.Equal(t, item.out, transferCase(item.src, item.dst), i)
+		assert.Equal(t, item.out, TransferCase(item.src, item.dst), i)
 	}
 }
