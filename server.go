@@ -318,7 +318,7 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 				Name:   TransferCase(question.Name, zone.Name),
 				Rrtype: dns.TypeNS,
 				Class:  dns.ClassINET,
-				Ttl:    durationToTime(zone.NSTTL),
+				Ttl:    durationToU32(zone.NSTTL),
 			},
 			Ns: ns,
 		})
@@ -335,15 +335,15 @@ func (s *Server) writeSOAResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Z
 			Name:   zone.Name,
 			Rrtype: dns.TypeSOA,
 			Class:  dns.ClassINET,
-			Ttl:    durationToTime(zone.SOATTL),
+			Ttl:    durationToU32(zone.SOATTL),
 		},
 		Ns:      zone.MasterNameServer,
 		Mbox:    emailToDomain(zone.AdminEmail),
 		Serial:  1,
-		Refresh: durationToTime(zone.Refresh),
-		Retry:   durationToTime(zone.Retry),
-		Expire:  durationToTime(zone.Expire),
-		Minttl:  durationToTime(zone.MinTTL),
+		Refresh: durationToU32(zone.Refresh),
+		Retry:   durationToU32(zone.Retry),
+		Expire:  durationToU32(zone.Expire),
+		Minttl:  durationToU32(zone.MinTTL),
 	})
 
 	// add ns records
@@ -353,7 +353,7 @@ func (s *Server) writeSOAResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Z
 				Name:   zone.Name,
 				Rrtype: dns.TypeNS,
 				Class:  dns.ClassINET,
-				Ttl:    durationToTime(zone.NSTTL),
+				Ttl:    durationToU32(zone.NSTTL),
 			},
 			Ns: ns,
 		})
@@ -371,7 +371,7 @@ func (s *Server) writeNSResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zo
 				Name:   zone.Name,
 				Rrtype: dns.TypeNS,
 				Class:  dns.ClassINET,
-				Ttl:    durationToTime(zone.NSTTL),
+				Ttl:    durationToU32(zone.NSTTL),
 			},
 			Ns: ns,
 		})
@@ -392,15 +392,15 @@ func (s *Server) writeError(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone, c
 				Name:   zone.Name,
 				Rrtype: dns.TypeSOA,
 				Class:  dns.ClassINET,
-				Ttl:    durationToTime(zone.SOATTL),
+				Ttl:    durationToU32(zone.SOATTL),
 			},
 			Ns:      zone.MasterNameServer,
 			Mbox:    emailToDomain(zone.AdminEmail),
 			Serial:  1,
-			Refresh: durationToTime(zone.Refresh),
-			Retry:   durationToTime(zone.Retry),
-			Expire:  durationToTime(zone.Expire),
-			Minttl:  durationToTime(zone.MinTTL),
+			Refresh: durationToU32(zone.Refresh),
+			Retry:   durationToU32(zone.Retry),
+			Expire:  durationToU32(zone.Expire),
+			Minttl:  durationToU32(zone.MinTTL),
 		})
 	}
 
@@ -450,12 +450,12 @@ func (s *Server) convert(query string, zone *Zone, set Set) []dns.RR {
 		Name:   TransferCase(query, set.Name),
 		Rrtype: uint16(set.Type),
 		Class:  dns.ClassINET,
-		Ttl:    durationToTime(set.TTL),
+		Ttl:    durationToU32(set.TTL),
 	}
 
 	// ensure zone min TTL
 	if set.TTL < zone.MinTTL {
-		header.Ttl = durationToTime(zone.MinTTL)
+		header.Ttl = durationToU32(zone.MinTTL)
 	}
 
 	// prepare list

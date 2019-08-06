@@ -135,6 +135,6 @@ func emailToDomain(email string) string {
 	return dns.Fqdn(name)
 }
 
-func durationToTime(d time.Duration) uint32 {
+func durationToU32(d time.Duration) uint32 {
 	return uint32(math.Ceil(d.Seconds()))
 }
