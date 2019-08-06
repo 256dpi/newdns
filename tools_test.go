@@ -12,12 +12,17 @@ func TestIsDomain(t *testing.T) {
 	assert.True(t, IsDomain("example.com.", true))
 	assert.False(t, IsDomain("", false))
 	assert.True(t, IsDomain("x", false))
+	assert.True(t, IsDomain(".", false))
 }
 
 func TestInZone(t *testing.T) {
 	assert.True(t, InZone("example.com.", "foo.example.com."))
 	assert.True(t, InZone("example.com", "foo.example.com"))
 	assert.True(t, InZone("example.com", "example.com"))
+	assert.True(t, InZone(".", "com"))
+	assert.True(t, InZone(".", "."))
+	assert.False(t, InZone("", "."))
+	assert.False(t, InZone("", ""))
 	assert.False(t, InZone("foo.example.com", "example.com"))
 }
 

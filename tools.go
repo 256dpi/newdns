@@ -15,8 +15,14 @@ func IsDomain(name string, fqdn bool) bool {
 	return ok && (!fqdn || fqdn && dns.IsFqdn(name))
 }
 
-// InZone returns whether the provided name is part of the provided zone.
+// InZone returns whether the provided name is part of the provided zone. Will
+// always return false if the provided domains are not valid.
 func InZone(zone, name string) bool {
+	// check domains
+	if !IsDomain(zone, false) || !IsDomain(name, false) {
+		return false
+	}
+
 	return dns.IsSubDomain(zone, name)
 }
 
