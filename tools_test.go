@@ -36,12 +36,25 @@ func TestTrimZone(t *testing.T) {
 }
 
 func TestNormalizeDomain(t *testing.T) {
-	assert.Equal(t, "", NormalizeDomain("", false, false))
-	assert.Equal(t, ".", NormalizeDomain("", false, true))
-	assert.Equal(t, "foo", NormalizeDomain(" foo", false, false))
-	assert.Equal(t, "foo", NormalizeDomain("foo ", false, false))
-	assert.Equal(t, "foo", NormalizeDomain(" fOO ", true, false))
-	assert.Equal(t, "foo.", NormalizeDomain(" fOO ", true, true))
+	assert.Equal(t, "", NormalizeDomain("", false, false, false))
+	assert.Equal(t, ".", NormalizeDomain("", false, true, false))
+	assert.Equal(t, "foo", NormalizeDomain(" foo", false, false, false))
+	assert.Equal(t, "foo", NormalizeDomain("foo ", false, false, false))
+	assert.Equal(t, "foo", NormalizeDomain(" fOO ", true, false, false))
+	assert.Equal(t, "foo.", NormalizeDomain(" fOO ", true, true, false))
+	assert.Equal(t, "foo", NormalizeDomain(" fOO. ", true, false, true))
+}
+
+func TestSplitDomain(t *testing.T) {
+	assert.Equal(t, []string(nil), SplitDomain("", false))
+	assert.Equal(t, []string(nil), SplitDomain(".", false))
+	assert.Equal(t, []string{"foo"}, SplitDomain("foo", false))
+	assert.Equal(t, []string{"foo", "bar"}, SplitDomain("foo.bar", false))
+
+	assert.Equal(t, []string(nil), SplitDomain("", true))
+	assert.Equal(t, []string(nil), SplitDomain(".", true))
+	assert.Equal(t, []string{"foo"}, SplitDomain("foo", true))
+	assert.Equal(t, []string{"foo.bar", "bar"}, SplitDomain("foo.bar", true))
 }
 
 func TestTransferCase(t *testing.T) {

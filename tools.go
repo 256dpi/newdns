@@ -48,8 +48,9 @@ func TrimZone(zone, name string) string {
 	return newName
 }
 
-// NormalizeDomain will normalize the provided domain name.
-func NormalizeDomain(name string, lower, fqdn bool) string {
+// NormalizeDomain will normalize the provided domain name by removing space
+// around the name and lowercase it if request.
+func NormalizeDomain(name string, lower, makeFQDN, removeFQDN bool) string {
 	// remove spaces
 	name = strings.TrimSpace(name)
 
@@ -58,12 +59,44 @@ func NormalizeDomain(name string, lower, fqdn bool) string {
 		name = strings.ToLower(name)
 	}
 
-	// ensure FQDN if requested
-	if fqdn {
+	// make FQDN if requested
+	if makeFQDN {
 		name = dns.Fqdn(name)
 	}
 
+	// remove FQDN if requested
+	if removeFQDN && dns.IsFqdn(name) {
+		name = name[:len(name)-1]
+	}
+
 	return name
+}
+
+// SplitDomain will split the provided domain either in separate labels or
+// hierarchical labels. The late allows walking a domain up to the root.
+func SplitDomain(name string, hierarchical bool) []string {
+	// normalize name
+	name = NormalizeDomain(name, false, false, true)
+
+	// return nil if empty
+	if name == "" {
+		return nil
+	}
+
+	// split in labels
+	if !hierarchical {
+		return dns.SplitDomainName(name)
+	}
+
+	// prepare list
+	var list []string
+
+	// walk domain
+	for off, end := 0, false; !end; off, end = dns.NextLabel(name, off) {
+		list = append(list, name[off:])
+	}
+
+	return list
 }
 
 // TransferCase will transfer the case from the source name to the destination.
