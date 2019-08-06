@@ -11,7 +11,6 @@ func TestIsDomain(t *testing.T) {
 	assert.False(t, IsDomain("example.com", true))
 	assert.True(t, IsDomain("example.com.", true))
 	assert.True(t, IsDomain(" example.com.", true))
-	assert.True(t, IsDomain("example.com. ", true))
 	assert.False(t, IsDomain("", false))
 	assert.True(t, IsDomain("x", false))
 	assert.True(t, IsDomain(".", false))
