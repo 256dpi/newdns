@@ -1168,6 +1168,10 @@ func conformanceTests(t *testing.T, proto, addr string) {
 		}, ret)
 	})
 
+	t.Run("DomainWithSpace", func(t *testing.T) {
+		assertMissing(t, proto, addr, "\\ ip4.newdns.256dpi.com.", "NULL", dns.RcodeNameError)
+	})
+
 	t.Run("EDNSSuccess", func(t *testing.T) {
 		ret, err := Query(proto, addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.SetEdns0(1337, false)
