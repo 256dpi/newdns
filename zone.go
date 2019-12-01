@@ -3,7 +3,6 @@ package newdns
 import (
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -163,8 +162,8 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 		return nil, false, errors.Errorf("invalid name: %s", name)
 	}
 
-	// enforce lowercase name
-	name = strings.ToLower(name)
+	// normalize name
+	name = NormalizeDomain(name, true, false, false)
 
 	// check name
 	if !InZone(z.Name, name) {
@@ -235,7 +234,7 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 			result = append(result, sets[0])
 
 			// get normalized address
-			address := strings.ToLower(sets[0].Records[0].Address)
+			address := NormalizeDomain(sets[0].Records[0].Address, true, false, false)
 
 			// continue lookup with CNAME address if address is in zone
 			if InZone(z.Name, address) {

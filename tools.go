@@ -73,7 +73,7 @@ func NormalizeDomain(name string, lower, makeFQDN, removeFQDN bool) string {
 }
 
 // SplitDomain will split the provided domain either in separate labels or
-// hierarchical labels. The late allows walking a domain up to the root.
+// hierarchical labels. The later allows walking a domain up to the root.
 func SplitDomain(name string, hierarchical bool) []string {
 	// normalize name
 	name = NormalizeDomain(name, false, false, true)
@@ -100,8 +100,8 @@ func SplitDomain(name string, hierarchical bool) []string {
 }
 
 // TransferCase will transfer the case from the source name to the destination.
-// For for the source "foo.AAA.com." and destination "aaa.com" the function
-// will return "AAA.com". The source must be either a child or the same as the
+// For the source "foo.AAA.com." and destination "aaa.com" the function will
+// return "AAA.com". The source must be either a child or the same as the
 // destination.
 func TransferCase(source, destination string) string {
 	// get lower variants
@@ -119,7 +119,7 @@ func TransferCase(source, destination string) string {
 }
 
 // Query can be used to query a DNS server over the provided protocol on its
-// address fot the specified name and type. The supplied function can be set to
+// address for the specified name and type. The supplied function can be set to
 // mutate the sent request.
 func Query(proto, addr, name, typ string, fn func(*dns.Msg)) (*dns.Msg, error) {
 	// prepare request
@@ -168,6 +168,6 @@ func emailToDomain(email string) string {
 	return dns.Fqdn(name)
 }
 
-func durationToU32(d time.Duration) uint32 {
+func toSeconds(d time.Duration) uint32 {
 	return uint32(math.Ceil(d.Seconds()))
 }
