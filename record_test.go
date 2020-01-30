@@ -72,6 +72,15 @@ func TestRecordValidate(t *testing.T) {
 			typ: TXT,
 			rec: Record{Data: []string{"foo"}},
 		},
+		{
+			typ: NS,
+			rec: Record{Address: "foo.com"},
+			err: "invalid ns name: foo.com",
+		},
+		{
+			typ: NS,
+			rec: Record{Address: "foo.com."},
+		},
 	}
 
 	for i, item := range table {

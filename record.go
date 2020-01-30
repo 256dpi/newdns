@@ -56,5 +56,12 @@ func (r *Record) Validate(typ Type) error {
 		}
 	}
 
+	// validate NS addresses
+	if typ == NS {
+		if !IsDomain(r.Address, true) {
+			return errors.Errorf("invalid ns name: %s", r.Address)
+		}
+	}
+
 	return nil
 }

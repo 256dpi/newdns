@@ -279,6 +279,8 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 	// prepare extra set
 	var extra []Set
 
+	// TODO: Lookup glue records for NS records?
+
 	// lookup extra sets
 	for _, set := range answer {
 		for _, record := range set.Records {
@@ -321,6 +323,16 @@ func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
 			},
 			Ns: ns,
 		})
+	}
+
+	// check if NS query
+	if typ == NS {
+		// move answers
+		rs.Ns = rs.Answer
+		rs.Answer = nil
+
+		// no authoritative response for other zone in NS queries
+		rs.Authoritative = false
 	}
 
 	// write message
@@ -489,6 +501,11 @@ func (s *Server) convert(query string, zone *Zone, set Set) []dns.RR {
 			list = append(list, &dns.TXT{
 				Hdr: header,
 				Txt: record.Data,
+			})
+		case NS:
+			list = append(list, &dns.NS{
+				Hdr: header,
+				Ns:  dns.Fqdn(record.Address),
 			})
 		}
 	}

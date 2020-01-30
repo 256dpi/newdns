@@ -21,11 +21,14 @@ const (
 
 	// TXT records return arbitrary text data.
 	TXT = Type(dns.TypeTXT)
+
+	// NS records delegate names to other name servers.
+	NS = Type(dns.TypeNS)
 )
 
 func (t Type) valid() bool {
 	switch t {
-	case A, AAAA, CNAME, MX, TXT:
+	case A, AAAA, CNAME, MX, TXT, NS:
 		return true
 	default:
 		return false

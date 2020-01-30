@@ -277,6 +277,20 @@ func TestServer(t *testing.T) {
 				}, nil
 			}
 
+			// handle other
+			if name == "other" {
+				return []Set{
+					{
+						Name: "other.newdns.256dpi.com.",
+						Type: NS,
+						Records: []Record{
+							{Address: "ns1.example.com."},
+							{Address: "ns2.example.com."},
+						},
+					},
+				}, nil
+			}
+
 			return nil, nil
 		},
 	}
@@ -1016,6 +1030,42 @@ func conformanceTests(t *testing.T, proto, addr string) {
 		}, ret)
 	})
 
+	t.Run("SubNS", func(t *testing.T) {
+		ret, err := Query(proto, addr, "other.newdns.256dpi.com.", "NS", nil)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: false,
+			},
+			Question: []dns.Question{
+				{Name: "other.newdns.256dpi.com.", Qtype: dns.TypeNS, Qclass: dns.ClassINET},
+			},
+			Ns: []dns.RR{
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "other.newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 14,
+					},
+					Ns: "ns1.example.com.",
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "other.newdns.256dpi.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 6,
+					},
+					Ns: "ns2.example.com.",
+				},
+			},
+		}, ret)
+	})
+
 	t.Run("NoExactRecord", func(t *testing.T) {
 		assertMissing(t, proto, addr, "ip4.newdns.256dpi.com.", "CNAME", dns.RcodeSuccess)
 		assertMissing(t, proto, addr, "ip6.newdns.256dpi.com.", "CNAME", dns.RcodeSuccess)
@@ -1023,6 +1073,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 		assertMissing(t, proto, addr, "ip6.newdns.256dpi.com.", "A", dns.RcodeSuccess)
 		assertMissing(t, proto, addr, "mail.newdns.256dpi.com.", "A", dns.RcodeSuccess)
 		assertMissing(t, proto, addr, "text.newdns.256dpi.com.", "A", dns.RcodeSuccess)
+		assertMissing(t, proto, addr, "ip4.newdns.256dpi.com.", "NS", dns.RcodeSuccess)
 	})
 
 	t.Run("NoExistingRecord", func(t *testing.T) {
@@ -1031,6 +1082,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "CNAME", dns.RcodeNameError)
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "MX", dns.RcodeNameError)
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "TXT", dns.RcodeNameError)
+		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "NS", dns.RcodeNameError)
 	})
 
 	t.Run("TruncatedResponse", func(t *testing.T) {
