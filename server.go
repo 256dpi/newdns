@@ -40,17 +40,17 @@ const (
 	// Finish is emitted when a request has been processed.
 	Finish Event = iota
 
-	// FallbackRequest is emitted with every request forwarded to the fallback
+	// ProxyRequest is emitted with every request forwarded to the fallback
 	// DNS server.
-	FallbackRequest Event = iota
+	ProxyRequest Event = iota
 
-	// FallbackResponse is emitted with ever response received from the fallback
+	// ProxyResponse is emitted with ever response received from the fallback
 	// DNS server.
-	FallbackResponse Event = iota
+	ProxyResponse Event = iota
 
-	// FallbackError is emitted with errors returned by the fallback DNS server.
+	// ProxyError is emitted with errors returned by the fallback DNS server.
 	// Inspect the error for more information.
-	FallbackError Event = iota
+	ProxyError Event = iota
 )
 
 // String will return the name of the event.
@@ -70,12 +70,12 @@ func (e Event) String() string {
 		return "Response"
 	case Finish:
 		return "Finish"
-	case FallbackRequest:
-		return "FallbackRequest"
-	case FallbackResponse:
-		return "FallbackResponse"
-	case FallbackError:
-		return "FallbackError"
+	case ProxyRequest:
+		return "ProxyRequest"
+	case ProxyResponse:
+		return "ProxyResponse"
+	case ProxyError:
+		return "ProxyError"
 	default:
 		return "Unknown"
 	}
@@ -149,9 +149,11 @@ func (s *Server) Run(addr string) error {
 		mux.Handle(zone, s)
 	}
 
-	// add fallback
+	// add fallback if available
 	if s.config.Fallback != "" {
-		mux.HandleFunc(".", s.fallback)
+		mux.Handle(".", Proxy(s.config.Fallback, func(e Event, msg *dns.Msg, err error) {
+			s.log(e, msg, err, "")
+		}))
 	}
 
 	// prepare servers
@@ -188,51 +190,6 @@ func (s *Server) Run(addr string) error {
 // Close will close the server.
 func (s *Server) Close() {
 	close(s.close)
-}
-
-func (s *Server) fallback(w dns.ResponseWriter, rq *dns.Msg) {
-	// log request
-	s.log(FallbackRequest, rq, nil, "")
-
-	// forward request to fallback
-	rs, err := dns.Exchange(rq, s.config.Fallback)
-	if err != nil {
-		s.log(FallbackError, nil, err, "")
-		_ = w.Close()
-		return
-	}
-
-	// log response
-	s.log(FallbackResponse, rs, nil, "")
-
-	// write response
-	err = w.WriteMsg(rs)
-	if err != nil {
-		s.log(NetworkError, nil, err, "")
-		_ = w.Close()
-	}
-}
-
-func (s *Server) accept(dh dns.Header) dns.MsgAcceptAction {
-	// check if request
-	if dh.Bits&(1<<15) != 0 {
-		s.log(Ignored, nil, nil, "not a request")
-		return dns.MsgIgnore
-	}
-
-	// check opcode
-	if int(dh.Bits>>11)&0xF != dns.OpcodeQuery {
-		s.log(Ignored, nil, nil, "not a query")
-		return dns.MsgIgnore
-	}
-
-	// check question count
-	if dh.Qdcount != 1 {
-		s.log(Ignored, nil, nil, "invalid question count: %d", dh.Qdcount)
-		return dns.MsgIgnore
-	}
-
-	return dns.MsgAccept
 }
 
 // ServeDNS implements the dns.Handler interface.
@@ -413,6 +370,28 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 
 	// write message
 	s.writeMessage(w, rq, rs)
+}
+
+func (s *Server) accept(dh dns.Header) dns.MsgAcceptAction {
+	// check if request
+	if dh.Bits&(1<<15) != 0 {
+		s.log(Ignored, nil, nil, "not a request")
+		return dns.MsgIgnore
+	}
+
+	// check opcode
+	if int(dh.Bits>>11)&0xF != dns.OpcodeQuery {
+		s.log(Ignored, nil, nil, "not a query")
+		return dns.MsgIgnore
+	}
+
+	// check question count
+	if dh.Qdcount != 1 {
+		s.log(Ignored, nil, nil, "invalid question count: %d", dh.Qdcount)
+		return dns.MsgIgnore
+	}
+
+	return dns.MsgAccept
 }
 
 func (s *Server) writeSOAResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone) {

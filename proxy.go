@@ -1,0 +1,38 @@
+package newdns
+
+import "github.com/miekg/dns"
+
+// Proxy returns a handler that proxies requests to the provided DNS server. The
+// optional logger is called with events about the processing of requests.
+func Proxy(addr string, logger func(Event, *dns.Msg, error)) dns.Handler {
+	return dns.HandlerFunc(func (w dns.ResponseWriter, rq *dns.Msg) {
+		// log request
+		if logger != nil {
+			logger(ProxyRequest, rq, nil)
+		}
+
+		// forward request to fallback
+		rs, err := dns.Exchange(rq, addr)
+		if err != nil {
+			if logger != nil {
+				logger(ProxyError, nil, err)
+			}
+			_ = w.Close()
+			return
+		}
+
+		// log response
+		if logger != nil {
+			logger(ProxyResponse, rs, nil)
+		}
+
+		// write response
+		err = w.WriteMsg(rs)
+		if err != nil {
+			if logger != nil {
+				logger(NetworkError, nil, err)
+			}
+			_ = w.Close()
+		}
+	})
+}
