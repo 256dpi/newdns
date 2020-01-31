@@ -146,7 +146,7 @@ func (s *Server) Run(addr string) error {
 
 	// register handler
 	for _, zone := range s.config.Zones {
-		mux.HandleFunc(zone, s.handler)
+		mux.Handle(zone, s)
 	}
 
 	// add fallback
@@ -235,7 +235,8 @@ func (s *Server) accept(dh dns.Header) dns.MsgAcceptAction {
 	return dns.MsgAccept
 }
 
-func (s *Server) handler(w dns.ResponseWriter, rq *dns.Msg) {
+// ServeDNS implements the dns.Handler interface.
+func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 	// get question
 	question := rq.Question[0]
 
