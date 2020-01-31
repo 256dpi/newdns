@@ -70,6 +70,12 @@ func (e Event) String() string {
 		return "Response"
 	case Finish:
 		return "Finish"
+	case FallbackRequest:
+		return "FallbackRequest"
+	case FallbackResponse:
+		return "FallbackResponse"
+	case FallbackError:
+		return "FallbackError"
 	default:
 		return "Unknown"
 	}
