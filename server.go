@@ -39,6 +39,18 @@ const (
 
 	// Finish is emitted when a request has been processed.
 	Finish Event = iota
+
+	// FallbackRequest is emitted with every request forwarded to the fallback
+	// DNS server.
+	FallbackRequest Event = iota
+
+	// FallbackResponse is emitted with ever response received from the fallback
+	// DNS server.
+	FallbackResponse Event = iota
+
+	// FallbackError is emitted with errors returned by the fallback DNS server.
+	// Inspect the error for more information.
+	FallbackError Event = iota
 )
 
 // String will return the name of the event.
@@ -70,8 +82,17 @@ type Config struct {
 	// Default: 1220.
 	BufferSize int
 
+	// The list of zones handled by this server.
+	//
+	// Default: ["."].
+	Zones []string
+
 	// Handler is the callback that returns a zone for the specified name.
 	Handler func(name string) (*Zone, error)
+
+	// The fallback DNS server to be used if the zones is not matched. Exact
+	// zones must be provided above for this to work.
+	Fallback string
 
 	// Reporter is the callback called with request errors.
 	Logger func(e Event, msg *dns.Msg, err error, reason string)
@@ -90,6 +111,20 @@ func NewServer(config Config) *Server {
 		config.BufferSize = 1220
 	}
 
+	// set default zone
+	if len(config.Zones) == 0 {
+		config.Zones = []string{"."}
+	}
+
+	// check zones if fallback
+	if config.Fallback != "" {
+		for _, zone := range config.Zones {
+			if zone == "." {
+				panic(`fallback conflicts with the match all pattern "." (default)`)
+			}
+		}
+	}
+
 	return &Server{
 		config: config,
 		close:  make(chan struct{}),
@@ -103,7 +138,14 @@ func (s *Server) Run(addr string) error {
 	mux := dns.NewServeMux()
 
 	// register handler
-	mux.HandleFunc(".", s.handler)
+	for _, zone := range s.config.Zones {
+		mux.HandleFunc(zone, s.handler)
+	}
+
+	// add fallback
+	if s.config.Fallback != "" {
+		mux.HandleFunc(".", s.fallback)
+	}
 
 	// prepare servers
 	udp := &dns.Server{Addr: addr, Net: "udp", Handler: mux, MsgAcceptFunc: s.accept}
@@ -139,6 +181,29 @@ func (s *Server) Run(addr string) error {
 // Close will close the server.
 func (s *Server) Close() {
 	close(s.close)
+}
+
+func (s *Server) fallback(w dns.ResponseWriter, rq *dns.Msg) {
+	// log request
+	s.log(FallbackRequest, rq, nil, "")
+
+	// forward request to fallback
+	rs, err := dns.Exchange(rq, s.config.Fallback)
+	if err != nil {
+		s.log(FallbackError, nil, err, "")
+		_ = w.Close()
+		return
+	}
+
+	// log response
+	s.log(FallbackResponse, rs, nil, "")
+
+	// write response
+	err = w.WriteMsg(rs)
+	if err != nil {
+		s.log(NetworkError, nil, err, "")
+		_ = w.Close()
+	}
 }
 
 func (s *Server) accept(dh dns.Header) dns.MsgAcceptAction {

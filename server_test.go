@@ -321,6 +321,129 @@ func TestServer(t *testing.T) {
 	})
 }
 
+func TestServerFallback(t *testing.T) {
+	zone := &Zone{
+		Name:             "example.com.",
+		MasterNameServer: "ns1.example.com.",
+		AllNameServers: []string{
+			"ns1.example.com.",
+			"ns2.example.com.",
+		},
+		Handler: func(name string) ([]Set, error) {
+			// handle apex
+			if name == "" {
+				return []Set{
+					{
+						Name: "example.com.",
+						Type: A,
+						Records: []Record{
+							{Address: "1.2.3.4"},
+						},
+					},
+				}, nil
+			}
+
+			return nil, nil
+		},
+	}
+
+	server := NewServer(Config{
+		Zones: []string{"example.com."},
+		Handler: func(name string) (*Zone, error) {
+			if InZone("example.com.", name) {
+				return zone, nil
+			}
+
+			return nil, nil
+		},
+		Fallback: "1.1.1.1:53",
+	})
+
+	addr := "0.0.0.0:53001"
+
+	run(server, addr, func() {
+		// internal zone
+		ret, err := Query("udp", addr, "example.com.", "A", func(msg *dns.Msg) {
+			msg.RecursionDesired = true
+		})
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:         true,
+				Authoritative:    true,
+				RecursionDesired: true,
+			},
+			Question: []dns.Question{
+				{Name: "example.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.A{
+					Hdr: dns.RR_Header{
+						Name:     "example.com.",
+						Rrtype:   dns.TypeA,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 4,
+					},
+					A: net.ParseIP("1.2.3.4"),
+				},
+			},
+			Ns: []dns.RR{
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "example.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 6,
+					},
+					Ns: "ns1.example.com.",
+				},
+				&dns.NS{
+					Hdr: dns.RR_Header{
+						Name:     "example.com.",
+						Rrtype:   dns.TypeNS,
+						Class:    dns.ClassINET,
+						Ttl:      172800,
+						Rdlength: 6,
+					},
+					Ns: "ns2.example.com.",
+				},
+			},
+		}, ret)
+
+		// external zone
+		ret, err = Query("udp", addr, "newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+			msg.RecursionDesired = true
+		})
+		assert.NoError(t, err)
+		ret.Answer[0].(*dns.A).Hdr.Ttl = 300
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:           true,
+				Authoritative:      false,
+				RecursionDesired:   true,
+				RecursionAvailable: true,
+			},
+			Question: []dns.Question{
+				{Name: "newdns.256dpi.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.A{
+					Hdr: dns.RR_Header{
+						Name:     "newdns.256dpi.com.",
+						Rrtype:   dns.TypeA,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 4,
+					},
+					A: net.ParseIP("1.2.3.4"),
+				},
+			},
+		}, ret)
+	})
+}
+
 func conformanceTests(t *testing.T, proto, addr string) {
 	t.Run("ApexA", func(t *testing.T) {
 		ret, err := Query(proto, addr, "newdns.256dpi.com.", "A", nil)
