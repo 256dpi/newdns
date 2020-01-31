@@ -27,12 +27,6 @@ func Accept(logger Logger) dns.MsgAcceptFunc {
 			return dns.MsgIgnore
 		}
 
-		// check other counts
-		if dh.Ancount > 0 || dh.Nscount > 0 || dh.Arcount > 0 {
-			log(logger, Ignored, nil, nil, fmt.Sprintf("invalid answer/ns/extra count: %d/%d/%d", dh.Ancount, dh.Nscount, dh.Arcount))
-			return dns.MsgIgnore
-		}
-
 		return dns.MsgAccept
 	}
 }
