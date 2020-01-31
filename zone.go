@@ -3,6 +3,7 @@ package newdns
 import (
 	"fmt"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -59,12 +60,19 @@ type Zone struct {
 	// Default: 5min.
 	MinTTL time.Duration
 
-	// The handler that responds to requests for this zone.
+	// The handler that responds to requests for this zone. The returned sets
+	// must not be altered going forward.
 	Handler func(name string) ([]Set, error)
+
+	mutex sync.Mutex
 }
 
 // Validate will validate the zone and ensure the documented defaults.
 func (z *Zone) Validate() error {
+	// acquire mutex
+	z.mutex.Lock()
+	defer z.mutex.Unlock()
+
 	// check name
 	if !IsDomain(z.Name, true) {
 		return errors.Errorf("name not fully qualified: %s", z.Name)
@@ -97,8 +105,10 @@ func (z *Zone) Validate() error {
 		return errors.Errorf("master name server not listed as name server: %s", z.MasterNameServer)
 	}
 
-	// sort name servers
-	sort.Strings(z.AllNameServers)
+	// sort name servers if not sorted
+	if !sort.StringsAreSorted(z.AllNameServers) {
+		sort.Strings(z.AllNameServers)
+	}
 
 	// set default admin email
 	if z.AdminEmail == "" {

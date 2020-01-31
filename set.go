@@ -3,6 +3,7 @@ package newdns
 import (
 	"fmt"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -23,10 +24,16 @@ type Set struct {
 	//
 	// Default: 5m.
 	TTL time.Duration
+
+	mutex sync.Mutex
 }
 
 // Validate will validate the set and ensure defaults.
 func (s *Set) Validate() error {
+	// acquire mutex
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	// check name
 	if !IsDomain(s.Name, true) {
 		return errors.Errorf("invalid name: %s", s.Name)
@@ -55,8 +62,8 @@ func (s *Set) Validate() error {
 		}
 	}
 
-	// sort records
-	sort.Slice(s.Records, func(i, j int) bool {
+	// prepare less
+	less := func(i, j int) bool {
 		// sort by data if TXT
 		if s.Type == TXT {
 			return s.Records[i].Data[0] < s.Records[j].Data[0]
@@ -71,7 +78,12 @@ func (s *Set) Validate() error {
 
 		// otherwise by address
 		return s.Records[i].Address < s.Records[j].Address
-	})
+	}
+
+	// sort records if not sorted
+	if !sort.SliceIsSorted(s.Records, less) {
+		sort.Slice(s.Records, less)
+	}
 
 	// check for duplicate addresses if not TXT
 	if len(s.Records) > 1 && s.Type != TXT {

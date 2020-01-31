@@ -94,6 +94,7 @@ type Config struct {
 	Zones []string
 
 	// Handler is the callback that returns a zone for the specified name.
+	// The returned zone must not be altered going forward.
 	Handler func(name string) (*Zone, error)
 
 	// The fallback DNS server to be used if the zones is not matched. Exact
