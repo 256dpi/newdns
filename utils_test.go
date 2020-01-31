@@ -3,10 +3,12 @@ package newdns
 import (
 	"bytes"
 	"encoding/json"
+	"sort"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -39,6 +41,31 @@ func equalJSON(t *testing.T, a, b interface{}) {
 	bb := buf.String()
 
 	assert.JSONEq(t, aa, bb)
+}
+
+func order(rrs []dns.RR) []dns.RR {
+	cpy := make([]dns.RR, len(rrs))
+	copy(cpy, rrs)
+
+	sort.Slice(cpy, func(i, j int) bool {
+		var ai string
+		switch rr := cpy[i].(type) {
+		case *dns.NS:
+			ai = rr.Ns
+			rr.Hdr.Rdlength = 0
+		}
+
+		var aj string
+		switch rr := cpy[j].(type) {
+		case *dns.NS:
+			aj = rr.Ns
+			rr.Hdr.Rdlength = 0
+		}
+
+		return ai < aj
+	})
+
+	return cpy
 }
 
 func isIOError(err error) bool {

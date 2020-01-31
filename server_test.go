@@ -18,6 +18,13 @@ var awsNS = []string{
 
 const awsPrimaryNS = "ns-140.awsdns-17.com."
 
+var awsOtherNS = []string{
+	"ns-1074.awsdns-06.org.",
+	"ns-1631.awsdns-11.co.uk.",
+	"ns-243.awsdns-30.com.",
+	"ns-869.awsdns-44.net.",
+}
+
 var nsRRs = []dns.RR{
 	&dns.NS{
 		Hdr: dns.RR_Header{
@@ -58,6 +65,49 @@ var nsRRs = []dns.RR{
 			Rdlength: 22,
 		},
 		Ns: awsNS[3],
+	},
+}
+
+var otherNSRRs = []dns.RR{
+	&dns.NS{
+		Hdr: dns.RR_Header{
+			Name:     "other.newdns.256dpi.com.",
+			Rrtype:   dns.TypeNS,
+			Class:    dns.ClassINET,
+			Ttl:      300,
+			Rdlength: 23,
+		},
+		Ns: awsOtherNS[0],
+	},
+	&dns.NS{
+		Hdr: dns.RR_Header{
+			Name:     "other.newdns.256dpi.com.",
+			Rrtype:   dns.TypeNS,
+			Class:    dns.ClassINET,
+			Ttl:      300,
+			Rdlength: 19,
+		},
+		Ns: awsOtherNS[1],
+	},
+	&dns.NS{
+		Hdr: dns.RR_Header{
+			Name:     "other.newdns.256dpi.com.",
+			Rrtype:   dns.TypeNS,
+			Class:    dns.ClassINET,
+			Ttl:      300,
+			Rdlength: 25,
+		},
+		Ns: awsOtherNS[2],
+	},
+	&dns.NS{
+		Hdr: dns.RR_Header{
+			Name:     "other.newdns.256dpi.com.",
+			Rrtype:   dns.TypeNS,
+			Class:    dns.ClassINET,
+			Ttl:      300,
+			Rdlength: 22,
+		},
+		Ns: awsOtherNS[3],
 	},
 }
 
@@ -284,8 +334,10 @@ func TestServer(t *testing.T) {
 						Name: "other.newdns.256dpi.com.",
 						Type: NS,
 						Records: []Record{
-							{Address: "ns1.example.com."},
-							{Address: "ns2.example.com."},
+							{Address: awsOtherNS[0]},
+							{Address: awsOtherNS[1]},
+							{Address: awsOtherNS[2]},
+							{Address: awsOtherNS[3]},
 						},
 					},
 				}, nil
@@ -1156,6 +1208,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 	t.Run("SubNS", func(t *testing.T) {
 		ret, err := Query(proto, addr, "other.newdns.256dpi.com.", "NS", nil)
 		assert.NoError(t, err)
+		order(ret.Ns)
 		equalJSON(t, &dns.Msg{
 			MsgHdr: dns.MsgHdr{
 				Response:      true,
@@ -1164,28 +1217,7 @@ func conformanceTests(t *testing.T, proto, addr string) {
 			Question: []dns.Question{
 				{Name: "other.newdns.256dpi.com.", Qtype: dns.TypeNS, Qclass: dns.ClassINET},
 			},
-			Ns: []dns.RR{
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "other.newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      300,
-						Rdlength: 14,
-					},
-					Ns: "ns1.example.com.",
-				},
-				&dns.NS{
-					Hdr: dns.RR_Header{
-						Name:     "other.newdns.256dpi.com.",
-						Rrtype:   dns.TypeNS,
-						Class:    dns.ClassINET,
-						Ttl:      300,
-						Rdlength: 6,
-					},
-					Ns: "ns2.example.com.",
-				},
-			},
+			Ns: order(otherNSRRs),
 		}, ret)
 	})
 
