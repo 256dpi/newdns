@@ -359,7 +359,7 @@ func TestServerFallback(t *testing.T) {
 		Fallback: "1.1.1.1:53",
 	})
 
-	addr := "0.0.0.0:53001"
+	addr := "0.0.0.0:53002"
 
 	run(server, addr, func() {
 		// internal zone
