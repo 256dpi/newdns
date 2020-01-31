@@ -1,8 +1,6 @@
 package newdns
 
 import (
-	"fmt"
-	"sort"
 	"sync"
 	"time"
 
@@ -60,29 +58,6 @@ func (s *Set) Validate() error {
 		if err != nil {
 			return errors.Wrap(err, "invalid record")
 		}
-	}
-
-	// prepare less
-	less := func(i, j int) bool {
-		// sort by data if TXT
-		if s.Type == TXT {
-			return s.Records[i].Data[0] < s.Records[j].Data[0]
-		}
-
-		// sort by priority and address if MX
-		if s.Type == MX {
-			a := fmt.Sprintf("%05d %s", s.Records[i].Priority, s.Records[i].Address)
-			b := fmt.Sprintf("%05d %s", s.Records[j].Priority, s.Records[j].Address)
-			return a < b
-		}
-
-		// otherwise by address
-		return s.Records[i].Address < s.Records[j].Address
-	}
-
-	// sort records if not sorted
-	if !sort.SliceIsSorted(s.Records, less) {
-		sort.Slice(s.Records, less)
 	}
 
 	// check for duplicate addresses if not TXT

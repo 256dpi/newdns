@@ -131,10 +131,10 @@ func TestServer(t *testing.T) {
 		Name:             "newdns.256dpi.com.",
 		MasterNameServer: awsPrimaryNS,
 		AllNameServers: []string{
-			awsNS[1],
 			awsNS[0],
-			awsNS[3],
+			awsNS[1],
 			awsNS[2],
+			awsNS[3],
 		},
 		AdminEmail: "awsdns-hostmaster@amazon.com",
 		Refresh:    2 * time.Hour,
@@ -165,8 +165,8 @@ func TestServer(t *testing.T) {
 						Name: "newdns.256dpi.com.",
 						Type: TXT,
 						Records: []Record{
-							{Data: []string{"foo", "bar"}},
 							{Data: []string{"baz"}},
+							{Data: []string{"foo", "bar"}},
 						},
 					},
 				}, nil
@@ -324,9 +324,9 @@ func TestServer(t *testing.T) {
 						Name: "long.newdns.256dpi.com.",
 						Type: TXT,
 						Records: []Record{
-							{Data: []string{"z4e6ycRMp6MP3WvWQMxIAOXglxANbj3oB0xD8BffktO4eo3VCR0s6TyGHKixvarOFJU0fqNkXeFOeI7sTXH5X0iXZukfLgnGTxLXNC7KkVFwtVFsh1P0IUNXtNBlOVWrVbxkS62ezbLpENNkiBwbkCvcTjwF2kyI0curAt9JhhJFb3AAq0q1iHWlJLn1KSrev9PIsY3alndDKjYTPxAojxzGKdK3A7rWLJ8Uzb3Z5OhLwP7jTKqbWVUocJRFLYp"}},
 							{Data: []string{"gyK4oL9X8Zn3b6TwmUIYAgQx43rBOWMqJWR3wGMGNaZgajnhd2u9JaIbGwNo6gzZunyKYRxID3mKLmYUCcIrNYuo8R4UkijZeshwqEAM2EWnjNsB1hJHOlu6VyRKW13rsFUJedOSqc7YjjUoxm9c3mF28tEXmc3GVsC476wJ2ciSbp7ujDjQ032SQRD6kpayzFX8GncS5KXP8mLK2ZIqK2U4fUmYEpTPQMmp7w24GKkfGJzE4JfMBxSybDUScLq"}},
 							{Data: []string{"upNh05zi9flqN2puI9eIGgAgl3gwc65l3WjFdnE3u55dhyUyIoKbOlc1mQJPULPkn1V5TTG9rLBB8AzNfeL8jvwO8h0mzmJhPH8n6dkgI546jB8Z0g0MRJxN5VNSixjFjdR8vtUp6EWlVi7QSe9SYInghV0M17zZ8mXSHwTfYZaPH54ng22mSWzVbRX2tlUPLTNRB5CHrEtxliyhhQlRey98P5G0eo35FUXdqzOSJ3HGqDssBWQAxK3I9feOjbE"}},
+							{Data: []string{"z4e6ycRMp6MP3WvWQMxIAOXglxANbj3oB0xD8BffktO4eo3VCR0s6TyGHKixvarOFJU0fqNkXeFOeI7sTXH5X0iXZukfLgnGTxLXNC7KkVFwtVFsh1P0IUNXtNBlOVWrVbxkS62ezbLpENNkiBwbkCvcTjwF2kyI0curAt9JhhJFb3AAq0q1iHWlJLn1KSrev9PIsY3alndDKjYTPxAojxzGKdK3A7rWLJ8Uzb3Z5OhLwP7jTKqbWVUocJRFLYp"}},
 						},
 					},
 				}, nil

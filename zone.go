@@ -2,7 +2,6 @@ package newdns
 
 import (
 	"fmt"
-	"sort"
 	"sync"
 	"time"
 
@@ -103,11 +102,6 @@ func (z *Zone) Validate() error {
 	// check master inclusion
 	if !includesMaster {
 		return errors.Errorf("master name server not listed as name server: %s", z.MasterNameServer)
-	}
-
-	// sort name servers if not sorted
-	if !sort.StringsAreSorted(z.AllNameServers) {
-		sort.Strings(z.AllNameServers)
 	}
 
 	// set default admin email
