@@ -1,7 +1,6 @@
 package newdns
 
 import (
-	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -22,16 +21,10 @@ type Set struct {
 	//
 	// Default: 5m.
 	TTL time.Duration
-
-	mutex sync.Mutex
 }
 
 // Validate will validate the set and ensure defaults.
 func (s *Set) Validate() error {
-	// acquire mutex
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
 	// check name
 	if !IsDomain(s.Name, true) {
 		return errors.Errorf("invalid name: %s", s.Name)

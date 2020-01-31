@@ -2,7 +2,6 @@ package newdns
 
 import (
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -62,16 +61,10 @@ type Zone struct {
 	// The handler that responds to requests for this zone. The returned sets
 	// must not be altered going forward.
 	Handler func(name string) ([]Set, error)
-
-	mutex sync.Mutex
 }
 
 // Validate will validate the zone and ensure the documented defaults.
 func (z *Zone) Validate() error {
-	// acquire mutex
-	z.mutex.Lock()
-	defer z.mutex.Unlock()
-
 	// check name
 	if !IsDomain(z.Name, true) {
 		return errors.Errorf("name not fully qualified: %s", z.Name)
