@@ -1807,7 +1807,7 @@ func resolverTests(t *testing.T, fallback string) {
 		mx, err := resolver.LookupMX(ctx, "ref4m.newdns.256dpi.com")
 		assert.NoError(t, err)
 		assert.Equal(t, []*net.MX{
-			{ Host: "ip4.newdns.256dpi.com.", Pref: 7 },
+			{Host: "ip4.newdns.256dpi.com.", Pref: 7},
 		}, mx)
 	})
 

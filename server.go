@@ -29,7 +29,7 @@ type Config struct {
 	Fallback string
 
 	// Reporter is the callback called with request errors.
-	Logger func(e Event, msg *dns.Msg, err error, reason string)
+	Logger Logger
 }
 
 // Server is a DNS server.
@@ -78,45 +78,16 @@ func (s *Server) Run(addr string) error {
 
 	// add fallback if available
 	if s.config.Fallback != "" {
-		mux.Handle(".", Proxy(s.config.Fallback, func(e Event, msg *dns.Msg, err error) {
-			s.log(e, msg, err, "")
-		}))
+		mux.Handle(".", Proxy(s.config.Fallback, s.config.Logger))
 	}
 
-	// prepare servers
-	udp := &dns.Server{Addr: addr, Net: "udp", Handler: mux, MsgAcceptFunc: s.accept}
-	tcp := &dns.Server{Addr: addr, Net: "tcp", Handler: mux, MsgAcceptFunc: s.accept}
-
-	// prepare errors
-	errs := make(chan error, 2)
-
-	// run udp server
-	go func() {
-		errs <- udp.ListenAndServe()
-	}()
-
-	// run tcp server
-	go func() {
-		errs <- tcp.ListenAndServe()
-	}()
-
-	// await first error
-	var err error
-	select {
-	case err = <-errs:
-	case <-s.close:
+	// run server
+	err := Run(addr, mux, Accept(s.config.Logger), s.close)
+	if err != nil {
+		return err
 	}
 
-	// shutdown servers
-	_ = udp.Shutdown()
-	_ = tcp.Shutdown()
-
-	return err
-}
-
-// Close will close the server.
-func (s *Server) Close() {
-	close(s.close)
+	return nil
 }
 
 // ServeDNS implements the dns.Handler interface.
@@ -126,13 +97,13 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 
 	// check class
 	if question.Qclass != dns.ClassINET {
-		s.log(Ignored, nil, nil, "unsupported class: %s", dns.ClassToString[question.Qclass])
+		log(s.config.Logger, Ignored, nil, nil, fmt.Sprintf("unsupported class: %s", dns.ClassToString[question.Qclass]))
 		return
 	}
 
 	// log request and finish
-	s.log(Request, rq, nil, "")
-	defer s.log(Finish, nil, nil, "")
+	log(s.config.Logger, Request, rq, nil, "")
+	defer log(s.config.Logger, Finish, nil, nil, "")
 
 	// prepare response
 	rs := new(dns.Msg)
@@ -151,7 +122,7 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 
 		// check version
 		if rq.IsEdns0().Version() != 0 {
-			s.log(Refused, nil, nil, "unsupported EDNS version: %d", rq.IsEdns0().Version())
+			log(s.config.Logger, Refused, nil, nil, fmt.Sprintf("unsupported EDNS version: %d", rq.IsEdns0().Version()))
 			s.writeError(w, rq, rs, nil, dns.RcodeBadVers)
 			return
 		}
@@ -159,7 +130,7 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 
 	// check any type
 	if question.Qtype == dns.TypeANY {
-		s.log(Refused, nil, nil, "unsupported type: ANY")
+		log(s.config.Logger, Refused, nil, nil, "unsupported type: ANY")
 		s.writeError(w, rq, rs, nil, dns.RcodeNotImplemented)
 		return
 	}
@@ -171,14 +142,14 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 	zone, err := s.config.Handler(name)
 	if err != nil {
 		err = errors.Wrap(err, "server handler error")
-		s.log(BackendError, nil, err, "")
+		log(s.config.Logger, BackendError, nil, err, "")
 		s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
 		return
 	}
 
 	// check zone
 	if zone == nil {
-		s.log(Refused, nil, nil, "no zone")
+		log(s.config.Logger, Refused, nil, nil, "no zone")
 		rs.Authoritative = false
 		s.writeError(w, rq, rs, nil, dns.RcodeRefused)
 		return
@@ -187,7 +158,7 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 	// validate zone
 	err = zone.Validate()
 	if err != nil {
-		s.log(BackendError, nil, err, "")
+		log(s.config.Logger, BackendError, nil, err, "")
 		s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
 		return
 	}
@@ -209,7 +180,7 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 
 	// return error if type is not supported
 	if !typ.valid() {
-		s.log(Refused, nil, nil, "unsupported type: "+dns.TypeToString[question.Qtype])
+		log(s.config.Logger, Refused, nil, nil, fmt.Sprintf("unsupported type: %s", dns.TypeToString[question.Qtype]))
 		s.writeError(w, rq, rs, zone, dns.RcodeNameError)
 		return
 	}
@@ -217,7 +188,7 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 	// lookup main answer
 	answer, exists, err := zone.Lookup(name, typ)
 	if err != nil {
-		s.log(BackendError, nil, err, "")
+		log(s.config.Logger, BackendError, nil, err, "")
 		s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
 		return
 	}
@@ -250,7 +221,7 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 				if InZone(zone.Name, record.Address) {
 					ret, _, err := zone.Lookup(record.Address, A, AAAA)
 					if err != nil {
-						s.log(BackendError, nil, err, "")
+						log(s.config.Logger, BackendError, nil, err, "")
 						s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
 						return
 					}
@@ -299,26 +270,10 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 	s.writeMessage(w, rq, rs)
 }
 
-func (s *Server) accept(dh dns.Header) dns.MsgAcceptAction {
-	// check if request
-	if dh.Bits&(1<<15) != 0 {
-		s.log(Ignored, nil, nil, "not a request")
-		return dns.MsgIgnore
-	}
-
-	// check opcode
-	if int(dh.Bits>>11)&0xF != dns.OpcodeQuery {
-		s.log(Ignored, nil, nil, "not a query")
-		return dns.MsgIgnore
-	}
-
-	// check question count
-	if dh.Qdcount != 1 {
-		s.log(Ignored, nil, nil, "invalid question count: %d", dh.Qdcount)
-		return dns.MsgIgnore
-	}
-
-	return dns.MsgAccept
+// Close will close the server.
+func (s *Server) Close() {
+	defer func() { recover() }()
+	close(s.close)
 }
 
 func (s *Server) writeSOAResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone) {
@@ -422,19 +377,13 @@ func (s *Server) writeMessage(w dns.ResponseWriter, rq, rs *dns.Msg) {
 	// write message
 	err := w.WriteMsg(rs)
 	if err != nil {
-		s.log(NetworkError, nil, err, "")
+		log(s.config.Logger, NetworkError, nil, err, "")
 		_ = w.Close()
 		return
 	}
 
 	// log response
-	s.log(Response, rs, nil, "")
-}
-
-func (s *Server) log(e Event, msg *dns.Msg, err error, reason string, args ...interface{}) {
-	if s.config.Logger != nil {
-		s.config.Logger(e, msg, err, fmt.Sprintf(reason, args...))
-	}
+	log(s.config.Logger, Response, rs, nil, "")
 }
 
 func (s *Server) convert(query string, zone *Zone, set Set) []dns.RR {

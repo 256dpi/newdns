@@ -1,5 +1,7 @@
 package newdns
 
+import "github.com/miekg/dns"
+
 // Event denotes an event type emitted to the logger.
 type Event int
 
@@ -70,5 +72,14 @@ func (e Event) String() string {
 		return "ProxyError"
 	default:
 		return "Unknown"
+	}
+}
+
+// Logger is function that accepts logging events.
+type Logger func(e Event, msg *dns.Msg, err error, reason string)
+
+func log(l Logger, e Event, msg *dns.Msg, err error, reason string) {
+	if l != nil {
+		l(e, msg, err, reason)
 	}
 }
