@@ -1,6 +1,7 @@
 package newdns
 
 import (
+	"context"
 	"net"
 	"testing"
 	"time"
@@ -118,6 +119,10 @@ func TestAWS(t *testing.T) {
 
 	t.Run("TCP", func(t *testing.T) {
 		conformanceTests(t, "tcp", awsPrimaryNS+":53")
+	})
+
+	t.Run("Resolver", func(t *testing.T) {
+		resolverTests(t, awsPrimaryNS+":53")
 	})
 }
 
@@ -356,6 +361,11 @@ func TestServer(t *testing.T) {
 
 			return nil, nil
 		},
+		Logger: func(e Event, msg *dns.Msg, err error, reason string) {
+			if e == NetworkError {
+				panic(err.Error())
+			}
+		},
 	})
 
 	addr := "0.0.0.0:53001"
@@ -369,6 +379,10 @@ func TestServer(t *testing.T) {
 		t.Run("TCP", func(t *testing.T) {
 			conformanceTests(t, "tcp", addr)
 			additionalTests(t, "tcp", addr)
+		})
+
+		t.Run("Resolver", func(t *testing.T) {
+			resolverTests(t, addr)
 		})
 	})
 }
@@ -1757,4 +1771,49 @@ func assertMissing(t *testing.T, proto, addr, name, typ string, code int) {
 			},
 		},
 	}, ret)
+}
+
+func resolverTests(t *testing.T, fallback string) {
+	var dialer net.Dialer
+
+	resolver := net.Resolver{
+		PreferGo: true,
+		Dial: func(ctx context.Context, network, address string) (conn net.Conn, err error) {
+			return dialer.DialContext(ctx, network, fallback)
+		},
+	}
+
+	ctx := context.Background()
+
+	t.Run("LookupHost", func(t *testing.T) {
+		addrs, err := resolver.LookupHost(ctx, "newdns.256dpi.com")
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"1.2.3.4", "1:2:3:4::"}, addrs)
+	})
+
+	t.Run("LookupCNAME", func(t *testing.T) {
+		cname, err := resolver.LookupCNAME(ctx, "ref4.newdns.256dpi.com")
+		assert.NoError(t, err)
+		assert.Equal(t, "ip4.newdns.256dpi.com.", cname)
+	})
+
+	t.Run("LookupTXT", func(t *testing.T) {
+		txt, err := resolver.LookupTXT(ctx, "newdns.256dpi.com")
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"baz", "foobar"}, txt)
+	})
+
+	t.Run("LookupMX", func(t *testing.T) {
+		mx, err := resolver.LookupMX(ctx, "ref4m.newdns.256dpi.com")
+		assert.NoError(t, err)
+		assert.Equal(t, []*net.MX{
+			{ Host: "ip4.newdns.256dpi.com.", Pref: 7 },
+		}, mx)
+	})
+
+	t.Run("LookupNS", func(t *testing.T) {
+		ns, err := resolver.LookupNS(ctx, "other.newdns.256dpi.com")
+		assert.Error(t, err) // zone is not served by server
+		assert.Nil(t, ns)
+	})
 }
