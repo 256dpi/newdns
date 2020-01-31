@@ -140,7 +140,7 @@ func Query(proto, addr, name, typ string, fn func(*dns.Msg)) (*dns.Msg, error) {
 	// prepare client
 	client := dns.Client{
 		Net:     proto,
-		Timeout: 500 * time.Millisecond,
+		Timeout: time.Second,
 	}
 
 	// send request
