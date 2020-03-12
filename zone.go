@@ -41,12 +41,12 @@ type Zone struct {
 	// Default: 72h.
 	Expire time.Duration
 
-	// The TTl for the SOA record.
+	// The TTL for the SOA record.
 	//
 	// Default: 15m.
 	SOATTL time.Duration
 
-	// The TTl for NS records.
+	// The TTL for NS records.
 	//
 	// Default: 48h.
 	NSTTL time.Duration
