@@ -27,6 +27,22 @@ func run(s *Server, addr string, fn func()) {
 	fn()
 }
 
+func serve(handler dns.Handler, addr string, fn func()) {
+	closer := make(chan struct{})
+	defer close(closer)
+
+	go func() {
+		err := Run(addr, handler, Accept(nil), closer)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+
+	fn()
+}
+
 func equalJSON(t *testing.T, a, b interface{}) {
 	buf := new(bytes.Buffer)
 
