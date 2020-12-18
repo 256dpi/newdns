@@ -11,18 +11,22 @@ import (
 // mutate the sent request.
 func Query(proto, addr, name, typ string, fn func(*dns.Msg)) (*dns.Msg, error) {
 	// prepare request
-	msg := new(dns.Msg)
-	msg.Id = dns.Id()
-	msg.Question = make([]dns.Question, 1)
-	msg.Question[0] = dns.Question{
-		Name:   name,
-		Qtype:  dns.StringToType[typ],
-		Qclass: dns.ClassINET,
+	req := &dns.Msg{
+		MsgHdr: dns.MsgHdr{
+			Id: dns.Id(),
+		},
+		Question: []dns.Question{
+			{
+				Name:   name,
+				Qtype:  dns.StringToType[typ],
+				Qclass: dns.ClassINET,
+			},
+		},
 	}
 
 	// call function if available
 	if fn != nil {
-		fn(msg)
+		fn(req)
 	}
 
 	// prepare client
@@ -32,13 +36,13 @@ func Query(proto, addr, name, typ string, fn func(*dns.Msg)) (*dns.Msg, error) {
 	}
 
 	// send request
-	ret, _, err := client.Exchange(msg, addr)
+	res, _, err := client.Exchange(req, addr)
 	if err != nil {
 		return nil, err
 	}
 
 	// reset id to allow direct comparison
-	ret.Id = 0
+	res.Id = 0
 
-	return ret, nil
+	return res, nil
 }
