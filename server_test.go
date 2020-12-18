@@ -114,11 +114,11 @@ var otherNSRRs = []dns.RR{
 
 func TestAWS(t *testing.T) {
 	t.Run("UDP", func(t *testing.T) {
-		conformanceTests(t, "udp", awsPrimaryNS+":53")
+		conformanceTests(t, "udp", awsPrimaryNS+":53", false)
 	})
 
 	t.Run("TCP", func(t *testing.T) {
-		conformanceTests(t, "tcp", awsPrimaryNS+":53")
+		conformanceTests(t, "tcp", awsPrimaryNS+":53", false)
 	})
 
 	t.Run("Resolver", func(t *testing.T) {
@@ -372,12 +372,12 @@ func TestServer(t *testing.T) {
 
 	run(server, addr, func() {
 		t.Run("UDP", func(t *testing.T) {
-			conformanceTests(t, "udp", addr)
+			conformanceTests(t, "udp", addr, true)
 			additionalTests(t, "udp", addr)
 		})
 
 		t.Run("TCP", func(t *testing.T) {
-			conformanceTests(t, "tcp", addr)
+			conformanceTests(t, "tcp", addr, true)
 			additionalTests(t, "tcp", addr)
 		})
 
@@ -510,7 +510,7 @@ func TestServerFallback(t *testing.T) {
 	})
 }
 
-func conformanceTests(t *testing.T, proto, addr string) {
+func conformanceTests(t *testing.T, proto, addr string, local bool) {
 	t.Run("ApexA", func(t *testing.T) {
 		ret, err := Query(proto, addr, "newdns.256dpi.com.", "A", nil)
 		assert.NoError(t, err)
@@ -1500,12 +1500,20 @@ func conformanceTests(t *testing.T, proto, addr string) {
 						Name:     ".",
 						Rrtype:   dns.TypeOPT,
 						Class:    4096,
-						Ttl:      dns.RcodeBadVers << 20,
+						Ttl:      ret.Extra[0].Header().Ttl, // see below
 						Rdlength: 0,
 					},
 				},
 			},
 		}, ret)
+
+		// the AWS servers sometimes return a bit-flipped TTL value
+		ttl := ret.Extra[0].Header().Ttl
+		if !local {
+			assert.True(t, ttl == 0x1008000 || ttl == 0x1000000, ttl)
+		} else {
+			assert.Equal(t, uint32(dns.RcodeBadVers<<20), ttl)
+		}
 	})
 
 	t.Run("EDNSLongResponse", func(t *testing.T) {
