@@ -6,33 +6,36 @@ import (
 	"github.com/miekg/dns"
 )
 
+var fakeAddr = &net.TCPAddr{
+	IP:   net.IP{0, 0, 0, 0},
+	Port: 0,
+}
+
 type responseWriter struct {
 	msg *dns.Msg
 }
 
 func (w *responseWriter) LocalAddr() net.Addr {
-	return &net.TCPAddr{
-		IP:   net.IP{0, 0, 0, 0},
-		Port: 0,
-	}
+	return fakeAddr
 }
 
 func (w *responseWriter) RemoteAddr() net.Addr {
-	return &net.TCPAddr{
-		IP:   net.IP{0, 0, 0, 0},
-		Port: 0,
-	}
+	return fakeAddr
 }
 
 func (w *responseWriter) WriteMsg(msg *dns.Msg) error {
+	// check message
 	if w.msg != nil {
 		panic("message already set")
 	}
+
+	// set message
 	w.msg = msg
+
 	return nil
 }
 
-func (w *responseWriter) Write(buf []byte) (int, error) {
+func (w *responseWriter) Write([]byte) (int, error) {
 	panic("not implemented")
 }
 
@@ -52,56 +55,52 @@ func (w *responseWriter) Hijack() {
 	panic("not implemented")
 }
 
-// Resolver returns a very basic recursive resolver that uses the provided
+// Resolver returns a very primitive recursive resolver that uses the provided
 // handler to resolve all names.
 func Resolver(handler dns.Handler) dns.Handler {
-	return dns.HandlerFunc(func(w dns.ResponseWriter, rq *dns.Msg) {
-		// handle non recursion
-		if !rq.RecursionDesired {
-			handler.ServeDNS(w, rq)
+	return dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
+		// forward query if no recursion is desired
+		if !req.RecursionDesired {
+			handler.ServeDNS(w, req)
 			return
 		}
 
 		// prepare response
-		rs := new(dns.Msg)
-		rs.SetReply(rq)
-		rs.RecursionAvailable = true
+		res := new(dns.Msg)
+		res.SetReply(req)
+		res.RecursionAvailable = true
 
-		// prepare writer
+		// query handler
 		var wr responseWriter
-
-		// forward request to fallback
-		handler.ServeDNS(&wr, rq)
+		handler.ServeDNS(&wr, req)
 
 		// check response
 		if wr.msg == nil {
-			_ = w.WriteMsg(rs)
+			_ = w.WriteMsg(res)
 			return
 		}
 
-		// resolve and add answers
-		rs.Answer = append(rs.Answer, resolveRecursive(handler, wr.msg.Answer)...)
+		// add resolved answers
+		res.Answer = append(res.Answer, resolve(handler, wr.msg.Answer)...)
 
 		// write response
-		err := w.WriteMsg(rs)
+		err := w.WriteMsg(res)
 		if err != nil {
 			_ = w.Close()
 		}
 	})
 }
 
-func resolveRecursive(handler dns.Handler, in []dns.RR) []dns.RR {
+func resolve(handler dns.Handler, records []dns.RR) []dns.RR {
 	// prepare result
-	var out []dns.RR
-	out = append(out, in...)
+	var res []dns.RR
+	res = append(res, records...)
 
-	// handle answers
-	for _, answer := range in {
-		if cname, ok := answer.(*dns.CNAME); ok {
-			// prepare writer
+	// handle records
+	for _, record := range records {
+		if cname, ok := record.(*dns.CNAME); ok {
+			// query handler
 			var wr responseWriter
-
-			// serve query
 			handler.ServeDNS(&wr, &dns.Msg{
 				Question: []dns.Question{
 					{
@@ -112,10 +111,10 @@ func resolveRecursive(handler dns.Handler, in []dns.RR) []dns.RR {
 				},
 			})
 
-			// resolve and add answers
-			out = append(out, resolveRecursive(handler, wr.msg.Answer)...)
+			// add resolved answers
+			res = append(res, resolve(handler, wr.msg.Answer)...)
 		}
 	}
 
-	return out
+	return res
 }

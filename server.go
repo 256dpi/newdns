@@ -91,9 +91,9 @@ func (s *Server) Run(addr string) error {
 }
 
 // ServeDNS implements the dns.Handler interface.
-func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
+func (s *Server) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 	// get question
-	question := rq.Question[0]
+	question := req.Question[0]
 
 	// check class
 	if question.Qclass != dns.ClassINET {
@@ -102,28 +102,28 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 	}
 
 	// log request and finish
-	log(s.config.Logger, Request, rq, nil, "")
+	log(s.config.Logger, Request, req, nil, "")
 	defer log(s.config.Logger, Finish, nil, nil, "")
 
 	// prepare response
-	rs := new(dns.Msg)
-	rs.SetReply(rq)
+	res := new(dns.Msg)
+	res.SetReply(req)
 
 	// always compress responses
-	rs.Compress = true
+	res.Compress = true
 
 	// set flag
-	rs.Authoritative = true
+	res.Authoritative = true
 
 	// check edns
-	if rq.IsEdns0() != nil {
+	if req.IsEdns0() != nil {
 		// use edns in reply
-		rs.SetEdns0(uint16(s.config.BufferSize), false)
+		res.SetEdns0(uint16(s.config.BufferSize), false)
 
 		// check version
-		if rq.IsEdns0().Version() != 0 {
-			log(s.config.Logger, Refused, nil, nil, fmt.Sprintf("unsupported EDNS version: %d", rq.IsEdns0().Version()))
-			s.writeError(w, rq, rs, nil, dns.RcodeBadVers)
+		if req.IsEdns0().Version() != 0 {
+			log(s.config.Logger, Refused, nil, nil, fmt.Sprintf("unsupported EDNS version: %d", req.IsEdns0().Version()))
+			s.writeError(w, req, res, nil, dns.RcodeBadVers)
 			return
 		}
 	}
@@ -131,7 +131,7 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 	// check any type
 	if question.Qtype == dns.TypeANY {
 		log(s.config.Logger, Refused, nil, nil, "unsupported type: ANY")
-		s.writeError(w, rq, rs, nil, dns.RcodeNotImplemented)
+		s.writeError(w, req, res, nil, dns.RcodeNotImplemented)
 		return
 	}
 
@@ -143,15 +143,15 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 	if err != nil {
 		err = errors.Wrap(err, "server handler error")
 		log(s.config.Logger, BackendError, nil, err, "")
-		s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
+		s.writeError(w, req, res, nil, dns.RcodeServerFailure)
 		return
 	}
 
 	// check zone
 	if zone == nil {
 		log(s.config.Logger, Refused, nil, nil, "no zone")
-		rs.Authoritative = false
-		s.writeError(w, rq, rs, nil, dns.RcodeRefused)
+		res.Authoritative = false
+		s.writeError(w, req, res, nil, dns.RcodeRefused)
 		return
 	}
 
@@ -159,19 +159,19 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 	err = zone.Validate()
 	if err != nil {
 		log(s.config.Logger, BackendError, nil, err, "")
-		s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
+		s.writeError(w, req, res, nil, dns.RcodeServerFailure)
 		return
 	}
 
 	// answer SOA directly
 	if question.Qtype == dns.TypeSOA && name == zone.Name {
-		s.writeSOAResponse(w, rq, rs, zone)
+		s.writeSOAResponse(w, req, res, zone)
 		return
 	}
 
 	// answer NS directly
 	if question.Qtype == dns.TypeNS && name == zone.Name {
-		s.writeNSResponse(w, rq, rs, zone)
+		s.writeNSResponse(w, req, res, zone)
 		return
 	}
 
@@ -181,7 +181,7 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 	// return error if type is not supported
 	if !typ.valid() {
 		log(s.config.Logger, Refused, nil, nil, fmt.Sprintf("unsupported type: %s", dns.TypeToString[question.Qtype]))
-		s.writeError(w, rq, rs, zone, dns.RcodeNameError)
+		s.writeError(w, req, res, zone, dns.RcodeNameError)
 		return
 	}
 
@@ -189,7 +189,7 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 	answer, exists, err := zone.Lookup(name, typ)
 	if err != nil {
 		log(s.config.Logger, BackendError, nil, err, "")
-		s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
+		s.writeError(w, req, res, nil, dns.RcodeServerFailure)
 		return
 	}
 
@@ -197,12 +197,12 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 	if len(answer) == 0 {
 		// write SOA with success code to indicate existence of other sets
 		if exists {
-			s.writeError(w, rq, rs, zone, dns.RcodeSuccess)
+			s.writeError(w, req, res, zone, dns.RcodeSuccess)
 			return
 		}
 
 		// otherwise return name error
-		s.writeError(w, rq, rs, zone, dns.RcodeNameError)
+		s.writeError(w, req, res, zone, dns.RcodeNameError)
 
 		return
 	}
@@ -222,7 +222,7 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 					ret, _, err := zone.Lookup(record.Address, A, AAAA)
 					if err != nil {
 						log(s.config.Logger, BackendError, nil, err, "")
-						s.writeError(w, rq, rs, nil, dns.RcodeServerFailure)
+						s.writeError(w, req, res, nil, dns.RcodeServerFailure)
 						return
 					}
 
@@ -235,17 +235,17 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 
 	// set answer
 	for _, set := range answer {
-		rs.Answer = append(rs.Answer, s.convert(question.Name, zone, set)...)
+		res.Answer = append(res.Answer, s.convert(question.Name, zone, set)...)
 	}
 
 	// set extra
 	for _, set := range extra {
-		rs.Extra = append(rs.Extra, s.convert(question.Name, zone, set)...)
+		res.Extra = append(res.Extra, s.convert(question.Name, zone, set)...)
 	}
 
 	// add ns records
 	for _, ns := range zone.AllNameServers {
-		rs.Ns = append(rs.Ns, &dns.NS{
+		res.Ns = append(res.Ns, &dns.NS{
 			Hdr: dns.RR_Header{
 				Name:   TransferCase(question.Name, zone.Name),
 				Rrtype: dns.TypeNS,
@@ -259,15 +259,15 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, rq *dns.Msg) {
 	// check if NS query
 	if typ == NS {
 		// move answers
-		rs.Ns = rs.Answer
-		rs.Answer = nil
+		res.Ns = res.Answer
+		res.Answer = nil
 
 		// no authoritative response for other zone in NS queries
-		rs.Authoritative = false
+		res.Authoritative = false
 	}
 
 	// write message
-	s.writeMessage(w, rq, rs)
+	s.writeMessage(w, req, res)
 }
 
 // Close will close the server.

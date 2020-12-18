@@ -5,14 +5,14 @@ import "github.com/miekg/dns"
 // Proxy returns a handler that proxies requests to the provided DNS server. The
 // optional logger is called with events about the processing of requests.
 func Proxy(addr string, logger Logger) dns.Handler {
-	return dns.HandlerFunc(func(w dns.ResponseWriter, rq *dns.Msg) {
+	return dns.HandlerFunc(func(w dns.ResponseWriter, req *dns.Msg) {
 		// log request
 		if logger != nil {
-			logger(ProxyRequest, rq, nil, "")
+			logger(ProxyRequest, req, nil, "")
 		}
 
 		// forward request to fallback
-		rs, err := dns.Exchange(rq, addr)
+		rs, err := dns.Exchange(req, addr)
 		if err != nil {
 			if logger != nil {
 				logger(ProxyError, nil, err, "")
