@@ -1,10 +1,8 @@
 # newdns
 
-[![Build Status](https://travis-ci.org/256dpi/newdns.svg?branch=master)](https://travis-ci.org/256dpi/newdns)
-[![Coverage Status](https://coveralls.io/repos/github/256dpi/newdns/badge.svg?branch=master)](https://coveralls.io/github/256dpi/newdns?branch=master)
+[![Test](https://github.com/256dpi/newdns/actions/workflows/test.yml/badge.svg)](https://github.com/256dpi/newdns/actions/workflows/test.yml)
 [![GoDoc](https://godoc.org/github.com/256dpi/newdns?status.svg)](http://godoc.org/github.com/256dpi/newdns)
 [![Release](https://img.shields.io/github/release/256dpi/newdns.svg)](https://github.com/256dpi/newdns/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/256dpi/newdns)](https://goreportcard.com/report/github.com/256dpi/newdns)
  
 **A library for building custom DNS servers in Go.**
 
