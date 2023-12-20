@@ -252,7 +252,7 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 			}
 		}
 
-		// return if there are not matches, but indicate that there are sets
+		// return if there are no matches, but indicate that there are sets
 		// available for other types
 		if len(result) == 0 {
 			return nil, true, nil
