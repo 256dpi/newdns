@@ -186,17 +186,15 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 		return
 	}
 
-	// check result
+	// handle absence
 	if len(answer) == 0 {
-		// write SOA with success code to indicate existence of other sets
 		if exists {
+			// we have a record, but not of the requested type
 			s.writeError(w, req, res, zone, dns.RcodeSuccess)
-			return
+		} else {
+			// we have no record at all for this name
+			s.writeError(w, req, res, zone, dns.RcodeNameError)
 		}
-
-		// otherwise return name error
-		s.writeError(w, req, res, zone, dns.RcodeNameError)
-
 		return
 	}
 
