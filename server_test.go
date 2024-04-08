@@ -1796,7 +1796,7 @@ func resolverTests(t *testing.T, fallback string) {
 	t.Run("LookupHost", func(t *testing.T) {
 		addrs, err := resolver.LookupHost(ctx, "newdns.256dpi.com")
 		assert.NoError(t, err)
-		assert.Equal(t, []string{"1.2.3.4", "1:2:3:4::"}, addrs)
+		assert.Equal(t, []string{"1:2:3:4::", "1.2.3.4"}, addrs)
 	})
 
 	t.Run("LookupCNAME", func(t *testing.T) {
