@@ -11,7 +11,7 @@ var QueryTimeout = time.Second
 
 // Query can be used to query a DNS server over the provided protocol on its
 // address for the specified name and type. The supplied function can be set to
-// mutate the sent request.
+// mutate the request before sending.
 func Query(proto, addr, name, typ string, fn func(*dns.Msg)) (*dns.Msg, error) {
 	// prepare request
 	req := &dns.Msg{

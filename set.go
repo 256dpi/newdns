@@ -31,8 +31,8 @@ func (s *Set) Validate() error {
 	}
 
 	// check type
-	if !s.Type.valid() {
-		return errors.Errorf("invalid type: %d", s.Type)
+	if !s.Type.supported() {
+		return errors.Errorf("unsupported type: %d", s.Type)
 	}
 
 	// check records

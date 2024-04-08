@@ -26,7 +26,7 @@ const (
 	NS = Type(dns.TypeNS)
 )
 
-func (t Type) valid() bool {
+func (t Type) supported() bool {
 	switch t {
 	case A, AAAA, CNAME, MX, TXT, NS:
 		return true

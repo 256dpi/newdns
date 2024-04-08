@@ -65,7 +65,7 @@ func NewServer(config Config) *Server {
 	}
 }
 
-// Run will run a udp and tcp server on the specified address. It will return
+// Run will run a UDP and TCP server on the specified address. It will return
 // on the first accept error and close all servers.
 func (s *Server) Run(addr string) error {
 	// prepare mux

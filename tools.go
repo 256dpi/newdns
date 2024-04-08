@@ -12,7 +12,7 @@ import (
 // fully qualified.
 func IsDomain(name string, fqdn bool) bool {
 	_, ok := dns.IsDomainName(name)
-	return ok && (!fqdn || fqdn && dns.IsFqdn(name))
+	return ok && (!fqdn || dns.IsFqdn(name))
 }
 
 // InZone returns whether the provided name is part of the provided zone. Will
@@ -49,7 +49,7 @@ func TrimZone(zone, name string) string {
 }
 
 // NormalizeDomain will normalize the provided domain name by removing space
-// around the name and lowercase it if request.
+// around the name and lowercase it if requested.
 func NormalizeDomain(name string, lower, makeFQDN, removeFQDN bool) string {
 	// remove spaces
 	name = strings.TrimSpace(name)
@@ -73,7 +73,7 @@ func NormalizeDomain(name string, lower, makeFQDN, removeFQDN bool) string {
 }
 
 // SplitDomain will split the provided domain either in separate labels or
-// hierarchical labels. The later allows walking a domain up to the root.
+// hierarchical labels. The latter allows walking a domain up to the root.
 func SplitDomain(name string, hierarchical bool) []string {
 	// normalize name
 	name = NormalizeDomain(name, false, false, true)
