@@ -1143,6 +1143,87 @@ func conformanceTests(t *testing.T, proto, addr string, local bool) {
 		}, ret)
 	})
 
+	t.Run("SubAAAAForCNAMEToA", func(t *testing.T) {
+		ret, err := Query(proto, addr, "ref4.newdns.256dpi.com.", "AAAA", nil)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "ref4.newdns.256dpi.com.", Qtype: dns.TypeAAAA, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:     "ref4.newdns.256dpi.com.",
+						Rrtype:   dns.TypeCNAME,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 6,
+					},
+					Target: "ip4.newdns.256dpi.com.",
+				},
+			},
+			Ns: nsRRs,
+		}, ret)
+	})
+
+	t.Run("SubAForCNAMEToAAAA", func(t *testing.T) {
+		ret, err := Query(proto, addr, "ref6.newdns.256dpi.com.", "A", nil)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "ref6.newdns.256dpi.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:     "ref6.newdns.256dpi.com.",
+						Rrtype:   dns.TypeCNAME,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 6,
+					},
+					Target: "ip6.newdns.256dpi.com.",
+				},
+			},
+			Ns: nsRRs,
+		}, ret)
+	})
+
+	t.Run("SubSRVForCNAME", func(t *testing.T) {
+		ret, err := Query(proto, addr, "ref4.newdns.256dpi.com.", "SRV", nil)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "ref4.newdns.256dpi.com.", Qtype: dns.TypeSRV, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.CNAME{
+					Hdr: dns.RR_Header{
+						Name:     "ref4.newdns.256dpi.com.",
+						Rrtype:   dns.TypeCNAME,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 6,
+					},
+					Target: "ip4.newdns.256dpi.com.",
+				},
+			},
+			Ns: nsRRs,
+		}, ret)
+	})
+
 	t.Run("SubMXWithExtraA", func(t *testing.T) {
 		ret, err := Query(proto, addr, "ref4m.newdns.256dpi.com.", "MX", nil)
 		assert.NoError(t, err)
@@ -1247,6 +1328,11 @@ func conformanceTests(t *testing.T, proto, addr string, local bool) {
 		assertMissing(t, proto, addr, "mail.newdns.256dpi.com.", "A", dns.RcodeSuccess)
 		assertMissing(t, proto, addr, "text.newdns.256dpi.com.", "A", dns.RcodeSuccess)
 		assertMissing(t, proto, addr, "ip4.newdns.256dpi.com.", "NS", dns.RcodeSuccess)
+		// unsupported types
+		assertMissing(t, proto, addr, "ip4.newdns.256dpi.com.", "SRV", dns.RcodeSuccess)
+		assertMissing(t, proto, addr, "ip6.newdns.256dpi.com.", "SRV", dns.RcodeSuccess)
+		assertMissing(t, proto, addr, "ip4.newdns.256dpi.com.", "PTR", dns.RcodeSuccess)
+		assertMissing(t, proto, addr, "ip6.newdns.256dpi.com.", "PTR", dns.RcodeSuccess)
 	})
 
 	t.Run("NoExistingRecord", func(t *testing.T) {
@@ -1256,6 +1342,9 @@ func conformanceTests(t *testing.T, proto, addr string, local bool) {
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "MX", dns.RcodeNameError)
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "TXT", dns.RcodeNameError)
 		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "NS", dns.RcodeNameError)
+		// unsupported types
+		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "SRV", dns.RcodeNameError)
+		assertMissing(t, proto, addr, "missing.newdns.256dpi.com.", "PTR", dns.RcodeNameError)
 	})
 
 	t.Run("TruncatedResponse", func(t *testing.T) {

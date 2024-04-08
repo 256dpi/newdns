@@ -178,13 +178,6 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 	// check type
 	typ := Type(question.Qtype)
 
-	// return error if type is not supported
-	if !typ.valid() {
-		log(s.config.Logger, Refused, nil, nil, fmt.Sprintf("unsupported type: %s", dns.TypeToString[question.Qtype]))
-		s.writeError(w, req, res, zone, dns.RcodeNameError)
-		return
-	}
-
 	// lookup main answer
 	answer, exists, err := zone.Lookup(name, typ)
 	if err != nil {
