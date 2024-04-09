@@ -5,7 +5,6 @@ import (
 	"net"
 
 	"github.com/miekg/dns"
-	"github.com/pkg/errors"
 )
 
 // Config provides configuration for a DNS server.
@@ -141,7 +140,7 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 	// get zone
 	zone, err := s.config.Handler(name)
 	if err != nil {
-		err = errors.Wrap(err, "server handler error")
+		err = fmt.Errorf("server handler error: %w", err)
 		log(s.config.Logger, BackendError, nil, err, "")
 		s.writeError(w, req, res, nil, dns.RcodeServerFailure)
 		return

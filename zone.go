@@ -1,10 +1,9 @@
 package newdns
 
 import (
+	"errors"
 	"fmt"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // Zone describes a single authoritative DNS zone.
@@ -67,24 +66,24 @@ type Zone struct {
 func (z *Zone) Validate() error {
 	// check name
 	if !IsDomain(z.Name, true) {
-		return errors.Errorf("name not fully qualified: %s", z.Name)
+		return fmt.Errorf("name not fully qualified: %s", z.Name)
 	}
 
 	// check master name server
 	if !IsDomain(z.MasterNameServer, true) {
-		return errors.Errorf("master server not full qualified: %s", z.MasterNameServer)
+		return fmt.Errorf("master server not full qualified: %s", z.MasterNameServer)
 	}
 
 	// check name server count
 	if len(z.AllNameServers) < 1 {
-		return errors.Errorf("missing name servers")
+		return fmt.Errorf("missing name servers")
 	}
 
 	// check name servers
 	var includesMaster bool
 	for _, ns := range z.AllNameServers {
 		if !IsDomain(ns, true) {
-			return errors.Errorf("name server not fully qualified: %s", ns)
+			return fmt.Errorf("name server not fully qualified: %s", ns)
 		}
 
 		if ns == z.MasterNameServer {
@@ -94,7 +93,7 @@ func (z *Zone) Validate() error {
 
 	// check master inclusion
 	if !includesMaster {
-		return errors.Errorf("master name server not listed as name server: %s", z.MasterNameServer)
+		return fmt.Errorf("master name server not listed as name server: %s", z.MasterNameServer)
 	}
 
 	// set default admin email
@@ -104,7 +103,7 @@ func (z *Zone) Validate() error {
 
 	// check admin email
 	if !IsDomain(emailToDomain(z.AdminEmail), true) {
-		return errors.Errorf("admin email cannot be converted to a domain name: %s", z.AdminEmail)
+		return fmt.Errorf("admin email cannot be converted to a domain name: %s", z.AdminEmail)
 	}
 
 	// set default refresh
@@ -139,12 +138,12 @@ func (z *Zone) Validate() error {
 
 	// check retry
 	if z.Retry >= z.Refresh {
-		return errors.Errorf("retry must be less than refresh: %d", z.Retry)
+		return fmt.Errorf("retry must be less than refresh: %d", z.Retry)
 	}
 
 	// check expire
 	if z.Expire < z.Refresh+z.Retry {
-		return errors.Errorf("expire must be bigger than the sum of refresh and retry: %d", z.Expire)
+		return fmt.Errorf("expire must be bigger than the sum of refresh and retry: %d", z.Expire)
 	}
 
 	return nil
@@ -156,7 +155,7 @@ func (z *Zone) Validate() error {
 func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 	// check name
 	if !IsDomain(name, true) {
-		return nil, false, errors.Errorf("invalid name: %s", name)
+		return nil, false, fmt.Errorf("invalid name: %s", name)
 	}
 
 	// normalize name
@@ -164,7 +163,7 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 
 	// check name
 	if !InZone(z.Name, name) {
-		return nil, false, errors.Errorf("name does not belong to zone: %s", name)
+		return nil, false, fmt.Errorf("name does not belong to zone: %s", name)
 	}
 
 	// prepare result
@@ -174,7 +173,7 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 		// get sets
 		sets, err := z.Handler(TrimZone(z.Name, name))
 		if err != nil {
-			return nil, false, errors.Wrap(err, "zone handler error")
+			return nil, false, fmt.Errorf("zone handler error: %w", err)
 		}
 
 		// return immediately if initial set is empty
@@ -196,12 +195,12 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 			// validate set
 			err = set.Validate()
 			if err != nil {
-				return nil, false, errors.Wrap(err, "invalid set")
+				return nil, false, fmt.Errorf("invalid set: %w", err)
 			}
 
 			// check relationship
 			if !InZone(z.Name, set.Name) {
-				return nil, false, errors.Errorf("set does not belong to zone: %s", set.Name)
+				return nil, false, fmt.Errorf("set does not belong to zone: %s", set.Name)
 			}
 
 			// increment counter
@@ -217,12 +216,12 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 
 		// check apex CNAME
 		if counters[CNAME] > 0 && name == z.Name {
-			return nil, false, errors.Errorf("invalid CNAME set at apex: %s", name)
+			return nil, false, fmt.Errorf("invalid CNAME set at apex: %s", name)
 		}
 
 		// check CNAME is stand-alone
 		if counters[CNAME] > 0 && (len(sets) > 1) {
-			return nil, false, errors.Errorf("other sets with CNAME set: %s", name)
+			return nil, false, fmt.Errorf("other sets with CNAME set: %s", name)
 		}
 
 		// check if CNAME and query is not CNAME
