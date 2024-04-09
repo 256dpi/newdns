@@ -112,10 +112,6 @@ var otherNSRRs = []dns.RR{
 	},
 }
 
-func init() {
-	QueryTimeout = 200 * time.Millisecond
-}
-
 func TestAWS(t *testing.T) {
 	t.Run("UDP", func(t *testing.T) {
 		conformanceTests(t, "udp", awsPrimaryNS+":53", false)

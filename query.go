@@ -6,9 +6,6 @@ import (
 	"github.com/miekg/dns"
 )
 
-// QueryTimeout is the default timeout for a DNS query.
-var QueryTimeout = time.Second
-
 // Query can be used to query a DNS server over the provided protocol on its
 // address for the specified name and type. The supplied function can be set to
 // mutate the request before sending.
@@ -35,7 +32,7 @@ func Query(proto, addr, name, typ string, fn func(*dns.Msg)) (*dns.Msg, error) {
 	// prepare client
 	client := dns.Client{
 		Net:     proto,
-		Timeout: QueryTimeout,
+		Timeout: time.Second,
 	}
 
 	// send request
