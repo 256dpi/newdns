@@ -21,7 +21,7 @@ func TestSetValidate(t *testing.T) {
 			set: Set{
 				Name: "example.com.",
 			},
-			err: "invalid type: 0",
+			err: "unsupported type: 0",
 		},
 		{
 			set: Set{
