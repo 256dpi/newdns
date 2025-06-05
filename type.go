@@ -24,11 +24,14 @@ const (
 
 	// NS records delegate names to other name servers.
 	NS = Type(dns.TypeNS)
+
+	// SRV records return the location of services.
+	SRV = Type(dns.TypeSRV)
 )
 
 func (t Type) supported() bool {
 	switch t {
-	case A, AAAA, CNAME, MX, TXT, NS:
+	case A, AAAA, CNAME, MX, TXT, NS, SRV:
 		return true
 	default:
 		return false

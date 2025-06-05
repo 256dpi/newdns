@@ -188,6 +188,7 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 			CNAME: 0,
 			MX:    0,
 			TXT:   0,
+			SRV:   0,
 		}
 
 		// validate sets

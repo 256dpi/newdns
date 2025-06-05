@@ -13,6 +13,12 @@ type Record struct {
 	// The priority for MX records.
 	Priority int
 
+	// The weight for SRV records.
+	Weight int
+
+	// The port for SRV records.
+	Port int
+
 	// The data for TXT records.
 	Data []string
 }
@@ -59,6 +65,21 @@ func (r *Record) Validate(typ Type) error {
 	if typ == NS {
 		if !IsDomain(r.Address, true) {
 			return fmt.Errorf("invalid ns name: %s", r.Address)
+		}
+	}
+
+	// validate SRV records
+	if typ == SRV {
+		if r.Priority < 0 || r.Priority > 65535 {
+			return fmt.Errorf("invalid priority: %d", r.Priority)
+		}
+
+		if r.Weight < 0 || r.Weight > 65535 {
+			return fmt.Errorf("invalid weight: %d", r.Weight)
+		}
+
+		if r.Port < 0 || r.Port > 65535 {
+			return fmt.Errorf("invalid port: %d", r.Port)
 		}
 	}
 

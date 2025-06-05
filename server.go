@@ -428,6 +428,14 @@ func (s *Server) convert(query string, zone *Zone, set Set) []dns.RR {
 				Hdr: header,
 				Ns:  dns.Fqdn(record.Address),
 			})
+		case SRV:
+			list = append(list, &dns.SRV{
+				Hdr:      header,
+				Priority: uint16(record.Priority),
+				Weight:   uint16(record.Weight),
+				Port:     uint16(record.Port),
+				Target:   dns.Fqdn(record.Address),
+			})
 		}
 	}
 
