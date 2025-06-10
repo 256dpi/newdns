@@ -206,8 +206,8 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 	for _, set := range answer {
 		for _, record := range set.Records {
 			switch set.Type {
-			case MX:
-				// lookup internal MX target A and AAAA records
+			case MX, SRV:
+				// lookup internal MX/SRV target A and AAAA records
 				if InZone(zone.Name, record.Address) {
 					ret, _, err := zone.Lookup(record.Address, A, AAAA)
 					if err != nil {

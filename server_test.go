@@ -349,6 +349,29 @@ func TestServer(t *testing.T) {
 				}, nil
 			}
 
+			// handle services
+			if name == "svc0" {
+				return []Set{
+					{
+						Name: "svc0.newdns.256dpi.com.",
+						Type: SRV,
+						Records: []Record{
+							{Address: "ip4.newdns.256dpi.com.", Port: 0, Priority: 0, Weight: 0},
+						},
+					},
+				}, nil
+			} else if name == "svc1" {
+				return []Set{
+					{
+						Name: "svc0.newdns.256dpi.com.",
+						Type: SRV,
+						Records: []Record{
+							{Address: "ip4.newdns.256dpi.com.", Port: 1, Priority: 1, Weight: 1},
+						},
+					},
+				}, nil
+			}
+
 			return nil, nil
 		},
 	}
@@ -1314,6 +1337,48 @@ func conformanceTests(t *testing.T, proto, addr string, local bool) {
 				{Name: "other.newdns.256dpi.com.", Qtype: dns.TypeNS, Qclass: dns.ClassINET},
 			},
 			Ns: order(otherNSRRs),
+		}, ret)
+	})
+
+	t.Run("SubSRV", func(t *testing.T) {
+		ret, err := Query(proto, addr, "svc0.newdns.256dpi.com.", "SRV", nil)
+		assert.NoError(t, err)
+		equalJSON(t, &dns.Msg{
+			MsgHdr: dns.MsgHdr{
+				Response:      true,
+				Authoritative: true,
+			},
+			Question: []dns.Question{
+				{Name: "svc0.newdns.256dpi.com.", Qtype: dns.TypeSRV, Qclass: dns.ClassINET},
+			},
+			Answer: []dns.RR{
+				&dns.SRV{
+					Hdr: dns.RR_Header{
+						Name:     "svc0.newdns.256dpi.com.",
+						Rrtype:   dns.TypeSRV,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 29,
+					},
+					Weight:   0,
+					Priority: 0,
+					Port:     0,
+					Target:   "ip4.newdns.256dpi.com.",
+				},
+			},
+			Extra: []dns.RR{
+				&dns.A{
+					Hdr: dns.RR_Header{
+						Name:     "ip4.newdns.256dpi.com.",
+						Rrtype:   dns.TypeA,
+						Class:    dns.ClassINET,
+						Ttl:      300,
+						Rdlength: 4,
+					},
+					A: net.ParseIP("1.2.3.4"),
+				},
+			},
+			Ns: nsRRs,
 		}, ret)
 	})
 
