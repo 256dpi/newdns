@@ -41,8 +41,8 @@ func (r *Record) Validate(typ Type) error {
 		}
 	}
 
-	// validate CNAME and MX addresses
-	if typ == CNAME || typ == MX {
+	// validate CNAME, MX, NS, and SRV addresses
+	if typ == CNAME || typ == MX || typ == NS || typ == SRV {
 		if !IsDomain(r.Address, true) {
 			return fmt.Errorf("invalid domain name: %s", r.Address)
 		}
@@ -58,13 +58,6 @@ func (r *Record) Validate(typ Type) error {
 			if len(data) > 255 {
 				return fmt.Errorf("data too long")
 			}
-		}
-	}
-
-	// validate NS addresses
-	if typ == NS {
-		if !IsDomain(r.Address, true) {
-			return fmt.Errorf("invalid ns name: %s", r.Address)
 		}
 	}
 

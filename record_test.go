@@ -75,11 +75,35 @@ func TestRecordValidate(t *testing.T) {
 		{
 			typ: NS,
 			rec: Record{Address: "foo.com"},
-			err: "invalid ns name: foo.com",
+			err: "invalid domain name: foo.com",
 		},
 		{
 			typ: NS,
 			rec: Record{Address: "foo.com."},
+		},
+		{
+			typ: SRV,
+			rec: Record{Address: "foo.com"},
+			err: "invalid domain name: foo.com",
+		},
+		{
+			typ: SRV,
+			rec: Record{Address: "foo.com.", Priority: -1, Weight: 0, Port: 0},
+			err: "invalid priority: -1",
+		},
+		{
+			typ: SRV,
+			rec: Record{Address: "foo.com.", Priority: 0, Weight: -1, Port: 0},
+			err: "invalid weight: -1",
+		},
+		{
+			typ: SRV,
+			rec: Record{Address: "foo.com.", Priority: 0, Weight: 0, Port: -1},
+			err: "invalid port: -1",
+		},
+		{
+			typ: SRV,
+			rec: Record{Address: "foo.com.", Priority: 0, Weight: 0, Port: 0},
 		},
 	}
 
