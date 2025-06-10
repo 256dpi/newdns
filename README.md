@@ -6,7 +6,7 @@
  
 **A library for building custom DNS servers in Go.**
 
-The newdns library wraps the widely used, but low-level [github.com/miekg/dns](https://github.com/miekg/dns) package with a simple interface to quickly build custom DNS servers. The implemented server only supports a subset of record types (A, AAAA, CNAME, MX, TXT) and is intended to be used as a leaf authoritative name server only. It supports UDP and TCP as transport protocols and implements EDNS0. Conformance is tested by issuing a corpus of tests against a zone in AWS Route53 and comparing the response and behavior.
+The newdns library wraps the widely used, but low-level [github.com/miekg/dns](https://github.com/miekg/dns) package with a simple interface to quickly build custom DNS servers. The implemented server only supports a subset of record types (A, AAAA, CNAME, MX, TXT, SRV) and is intended to be used as a leaf authoritative name server only. It supports UDP and TCP as transport protocols and implements EDNS0. Conformance is tested by issuing a corpus of tests against a zone in AWS Route53 and comparing the response and behavior.
 
 The intention of this project is not to build a feature-complete alternative to "managed zone" offerings by major cloud platforms. However, some projects may require frequent synchronization of many records between a custom database and a cloud-hosted "managed zone". In this scenario, a custom DNS server that queries the own database might be a lot simpler to manage and operate. Also, the distributed nature of the DNS system offers interesting qualities that could be leveraged by future applications.
 
