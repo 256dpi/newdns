@@ -7,9 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// i cant fix this test until its merged into the main repo ;_;
-func skip_TestResolver(t *testing.T) {
-	ret, err := Query("tcp", "1.1.1.1:53", "example.newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+func TestResolver(t *testing.T) {
+	ret, err := Query("tcp", "1.1.1.1:53", "ref4.newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 		msg.RecursionDesired = true
 	})
 	assert.NoError(t, err)
@@ -20,22 +19,22 @@ func skip_TestResolver(t *testing.T) {
 			RecursionAvailable: true,
 		},
 		Question: []dns.Question{
-			{Name: "example.newdns.256dpi.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+			{Name: "ref4.newdns.256dpi.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
 		},
 		Answer: []dns.RR{
 			&dns.CNAME{
 				Hdr: dns.RR_Header{
-					Name:     "example.newdns.256dpi.com.",
+					Name:     "ref4.newdns.256dpi.com.",
 					Rrtype:   dns.TypeCNAME,
 					Class:    dns.ClassINET,
 					Ttl:      ret.Answer[0].(*dns.CNAME).Hdr.Ttl,
-					Rdlength: 10,
+					Rdlength: 6,
 				},
-				Target: "example.com.",
+				Target: "ip4.newdns.256dpi.com.",
 			},
 			&dns.A{
 				Hdr: dns.RR_Header{
-					Name:     "example.com.",
+					Name:     "ip4.newdns.256dpi.com.",
 					Rrtype:   dns.TypeA,
 					Class:    dns.ClassINET,
 					Ttl:      ret.Answer[1].(*dns.A).Hdr.Ttl,
@@ -49,11 +48,10 @@ func skip_TestResolver(t *testing.T) {
 	addr := "0.0.0.0:53002"
 	mux := dns.NewServeMux()
 	mux.Handle("newdns.256dpi.com", Proxy(awsNS[0]+":53", nil))
-	mux.Handle("example.com", Proxy("a.iana-servers.net:53", nil))
 	handler := Resolver(mux)
 
 	serve(handler, addr, func() {
-		ret, err := Query("udp", addr, "example.newdns.256dpi.com.", "A", func(msg *dns.Msg) {
+		ret, err := Query("udp", addr, "ref4.newdns.256dpi.com.", "A", func(msg *dns.Msg) {
 			msg.RecursionDesired = true
 		})
 		assert.NoError(t, err)
@@ -64,22 +62,32 @@ func skip_TestResolver(t *testing.T) {
 				RecursionAvailable: true,
 			},
 			Question: []dns.Question{
-				{Name: "example.newdns.256dpi.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
+				{Name: "ref4.newdns.256dpi.com.", Qtype: dns.TypeA, Qclass: dns.ClassINET},
 			},
 			Answer: []dns.RR{
 				&dns.CNAME{
 					Hdr: dns.RR_Header{
-						Name:     "example.newdns.256dpi.com.",
+						Name:     "ref4.newdns.256dpi.com.",
 						Rrtype:   dns.TypeCNAME,
 						Class:    dns.ClassINET,
 						Ttl:      ret.Answer[0].(*dns.CNAME).Hdr.Ttl,
-						Rdlength: 13,
+						Rdlength: 23,
 					},
-					Target: "example.com.",
+					Target: "ip4.newdns.256dpi.com.",
 				},
 				&dns.A{
 					Hdr: dns.RR_Header{
-						Name:     "example.com.",
+						Name:     "ip4.newdns.256dpi.com.",
+						Rrtype:   dns.TypeA,
+						Class:    dns.ClassINET,
+						Ttl:      ret.Answer[1].(*dns.A).Hdr.Ttl,
+						Rdlength: 4,
+					},
+					A: ret.Answer[1].(*dns.A).A,
+				},
+				&dns.A{
+					Hdr: dns.RR_Header{
+						Name:     "ip4.newdns.256dpi.com.",
 						Rrtype:   dns.TypeA,
 						Class:    dns.ClassINET,
 						Ttl:      ret.Answer[1].(*dns.A).Hdr.Ttl,
