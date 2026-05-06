@@ -121,6 +121,9 @@ func TransferCase(source, destination string) string {
 func emailToDomain(email string) string {
 	// split on at
 	parts := strings.Split(email, "@")
+	if len(parts) != 2 {
+		return ""
+	}
 
 	// replace dots in username
 	parts[0] = strings.ReplaceAll(parts[0], ".", "\\.")
