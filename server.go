@@ -27,7 +27,7 @@ type Config struct {
 	// zones must be provided above for this to work.
 	Fallback string
 
-	// Reporter is the callback called with request errors.
+	// Logger is the callback called with logging events.
 	Logger Logger
 }
 
