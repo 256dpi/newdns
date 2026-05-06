@@ -170,6 +170,11 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 	var result []Set
 
 	for i := 0; ; i++ {
+		// guard against CNAME loops in user data
+		if i > 8 {
+			return nil, false, fmt.Errorf("CNAME chain too long")
+		}
+
 		// get sets
 		sets, err := z.Handler(TrimZone(z.Name, name))
 		if err != nil {
