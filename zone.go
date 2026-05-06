@@ -3,6 +3,7 @@ package newdns
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 )
 
@@ -231,7 +232,7 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 		}
 
 		// check if CNAME and query is not CNAME
-		if counters[CNAME] > 0 && !typeInList(needle, CNAME) {
+		if counters[CNAME] > 0 && !slices.Contains(needle, CNAME) {
 			// add set to result
 			result = append(result, sets[0])
 
@@ -249,7 +250,7 @@ func (z *Zone) Lookup(name string, needle ...Type) ([]Set, bool, error) {
 
 		// add matching set
 		for _, set := range sets {
-			if typeInList(needle, set.Type) {
+			if slices.Contains(needle, set.Type) {
 				// add set to result
 				result = append(result, set)
 

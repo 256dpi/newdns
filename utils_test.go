@@ -43,7 +43,7 @@ func serve(handler dns.Handler, addr string, fn func()) {
 	fn()
 }
 
-func equalJSON(t *testing.T, a, b interface{}) {
+func equalJSON(t *testing.T, a, b any) {
 	buf := new(bytes.Buffer)
 
 	e := json.NewEncoder(buf)

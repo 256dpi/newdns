@@ -4,11 +4,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Install
-        uses: actions/setup-go@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
-          go-version: 1.22
-      - name: Test
-        run: go test ./...
+          go-version-file: go.mod
+      - run: go vet ./...
+      - run: go test ./...

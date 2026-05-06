@@ -3,6 +3,7 @@ package newdns
 import (
 	"fmt"
 	"net"
+	"sync"
 
 	"github.com/miekg/dns"
 )
@@ -33,8 +34,9 @@ type Config struct {
 
 // Server is a DNS server.
 type Server struct {
-	config Config
-	close  chan struct{}
+	config    Config
+	close     chan struct{}
+	closeOnce sync.Once
 }
 
 // NewServer creates and returns a new DNS server.
@@ -262,8 +264,7 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, req *dns.Msg) {
 
 // Close will close the server.
 func (s *Server) Close() {
-	defer func() { recover() }()
-	close(s.close)
+	s.closeOnce.Do(func() { close(s.close) })
 }
 
 func (s *Server) writeSOAResponse(w dns.ResponseWriter, rq, rs *dns.Msg, zone *Zone) {
