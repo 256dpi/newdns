@@ -111,6 +111,11 @@ func resolve(handler dns.Handler, records []dns.RR) []dns.RR {
 				},
 			})
 
+			// skip if handler did not write a response
+			if wr.msg == nil {
+				continue
+			}
+
 			// add resolved answers
 			res = append(res, resolve(handler, wr.msg.Answer)...)
 		}
