@@ -11,8 +11,10 @@ func Proxy(addr string, logger Logger) dns.Handler {
 			logger(ProxyRequest, req, nil, "")
 		}
 
-		// forward request to fallback
-		rs, err := dns.Exchange(req, addr)
+		// forward request to fallback over the same transport as the inbound
+		// request so TCP queries don't silently downgrade to UDP
+		client := &dns.Client{Net: w.RemoteAddr().Network()}
+		rs, _, err := client.Exchange(req, addr)
 		if err != nil {
 			if logger != nil {
 				logger(ProxyError, nil, err, "")
