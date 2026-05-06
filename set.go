@@ -54,10 +54,12 @@ func (s *Set) Validate() error {
 
 	// check for duplicate addresses if not TXT
 	if len(s.Records) > 1 && s.Type != TXT {
-		for i := 0; i < len(s.Records)-1; i++ {
-			if s.Records[i].Address == s.Records[i+1].Address {
-				return fmt.Errorf("duplicate address: %s", s.Records[i].Address)
+		seen := make(map[string]struct{}, len(s.Records))
+		for _, r := range s.Records {
+			if _, ok := seen[r.Address]; ok {
+				return fmt.Errorf("duplicate address: %s", r.Address)
 			}
+			seen[r.Address] = struct{}{}
 		}
 	}
 
